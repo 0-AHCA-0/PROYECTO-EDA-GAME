@@ -1,3 +1,6 @@
+
+#Clase con diccionarios que contienen el arbol de evolucion.
+#En el futuro de agregara mas 
 class ArbolEvolucion:
     def __init__(self):
         self.evoluciones = {
