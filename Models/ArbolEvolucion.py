@@ -9,3 +9,7 @@ class ArbolEvolucion:
             "Tierra":{"1": "Semilla","2": "Mugre","3": "Duro como una Piedra"},
             "Aire":{"1": "Brisa","2": "Pies ligeros","3": "Huracan Viviente"},
         }
+    
+    def obtener_nombre_evolucion(self, clase, nivel):
+        """Retorna el nombre según la clase y nivel (1, 2 o 3)"""
+        return self.evoluciones.get(clase, {}).get(str(nivel), "Desconocido")

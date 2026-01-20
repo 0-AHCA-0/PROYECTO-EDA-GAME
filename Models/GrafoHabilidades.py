@@ -9,15 +9,15 @@ class GrafoHabilidades:
                 "Chispa": ["Bola de Fuego", "Enviste Igneo"],
                 "Bola de Fuego": ["Inferno"],
                 "Enviste Igneo": ["Explosion Solar"],
-                "Explosión Solar": [],
-                "Infierno": []
+                "Explosion Solar": [],
+                "Inferno": []
             },
             "Agua": {
-            "Burbuja": ["Squirt", "Sana Sana"],
-            "Squirt": ["Tsunami"],
-            "Sana Sana": ["Sana Colita de Rana"],
-            "Tsunami": [],
-            "Sana Colita de Rana": []
+                "Burbuja": ["Squirt", "Sana Sana"],
+                "Squirt": ["Tsunami"],
+                "Sana Sana": ["Sana Colita de Rana"],
+                "Tsunami": [],
+                "Sana Colita de Rana": []
             },
             "Tierra": {
                 "Terron": ["KKCK", "Lodo"],
@@ -34,5 +34,7 @@ class GrafoHabilidades:
                 "Patada Voladora": []
             }
         }
-
-            
+    
+    def obtener_hijos(self, clase, habilidad_actual):
+        """Retorna la lista de habilidades siguientes en el grafo"""
+        return self.grafos.get(clase, {}).get(habilidad_actual, [])

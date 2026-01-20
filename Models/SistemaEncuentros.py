@@ -1,4 +1,3 @@
-import random
 from Models.Entidades import Enemy
 
 class SistemaEncuentros:
