@@ -2,7 +2,7 @@ import pygame
 import sys
 # Importamos tu clase desde la carpeta donde la guardaste
 # Si tu carpeta se llama 'Interfaz_Usuario', déjalo así. Si se llama 'Vistas', cámbialo.
-from Interfaz_usuario import VistaJuego 
+from Respaldo.Interfaz_usuario import VistaJuego 
 
 # --- SIMULADOR DE DATOS ---
 # Creamos un jugador falso porque aún no tenemos el de Aidan conectado
