@@ -17,7 +17,7 @@ class JuegoEcos:
     def __init__(self):
         pygame.init()
         self.ventana = pygame.display.set_mode((930, 600))
-        pygame.display.set_caption("LEYENDAS ELEMENTALES")
+        pygame.display.set_caption("ECOS DE LA CARTA")
         self.reloj = pygame.time.Clock()
 
         # 1. Componentes de Datos y Configuración
@@ -88,7 +88,7 @@ class JuegoEcos:
                 if jugador:
                     nombre_carta = self.model.info_visual()
                     
-                    # 1. Dibujamos la interfaz base (Aquí es donde sale Elmo si XP >= 100)
+                    # 1. Dibujamos la interfaz base
                     self.v_juego.dibujar_interfaz(self.ventana, jugador, nombre_carta, jugador.nodo_actual)
                     
                     # 2. Dibujamos el elemento superior según el estado

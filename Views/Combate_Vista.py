@@ -12,7 +12,7 @@ class Combate_Vista:
     def dibujar_combate(self, ventana, jugador, enemigo, log_daño):
         # 1. FONDO
         try:
-            ruta_fondo = os.path.join(self.ruta_proyecto, "Imagenes", "Fondo_Combate.png")
+            ruta_fondo = os.path.join(self.ruta_proyecto, "Imagenes", "Fondo_Universidad.png")
             fondo = pygame.image.load(ruta_fondo)
             fondo = pygame.transform.scale(fondo, (930, 600))
             ventana.blit(fondo, (0, 0))
