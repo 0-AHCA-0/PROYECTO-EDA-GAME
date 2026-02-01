@@ -10,7 +10,7 @@ class GameView:
     def dibujar_interfaz(self, ventana, jugador, nombre_carta_actual):
         # 1. DIBUJAR EL FONDO DE JUEGO
         try:
-            ruta_fondo = os.path.join(self.ruta_proyecto, "Imagenes", "Fondo_Elmo.png")
+            ruta_fondo = os.path.join(self.ruta_proyecto, "Imagenes", "Fondo_Inicial.png")
             fondo = pygame.image.load(ruta_fondo)
             fondo = pygame.transform.scale(fondo, (930, 600))
             ventana.blit(fondo, (0, 0))
@@ -34,14 +34,22 @@ class GameView:
 
         # 3. CARGA DINÁMICA DE LA IMAGEN DE LA CARTA
         try:
-            # Convierte "Aprendiz Hot" a "aprendiz_hot.png" automáticamente
-            nombre_archivo = nombre_carta_actual.lower().replace(" ", "_") + ".png"
+            # Mapeo de clases a archivos de imagen
+            mapeo_clases = {
+                "Fuego": "P_Fuego.png",
+                "Agua": "P_Agua.png",
+                "Tierra": "P_Tierra.png",
+                "Aire": "P_Aire.png"
+            }
+            # Obtener el archivo de imagen basado en la clase del jugador
+            nombre_archivo = mapeo_clases.get(jugador.clase, "P_Fuego.png")
             ruta_img = os.path.join(self.ruta_proyecto, "Imagenes", nombre_archivo)
             imagen_carta = pygame.image.load(ruta_img)
             imagen_carta = pygame.transform.scale(imagen_carta, (200, 220))
             ventana.blit(imagen_carta, (x_carta + 15, y_carta + 20))
-        except:
+        except Exception as e:
             # Placeholder si no hay imagen todavía
+            print(f"Error cargando imagen: {e}")
             pygame.draw.rect(ventana, (100, 100, 100), (x_carta + 15, y_carta + 20, 200, 220))
 
         # Nombre de la carta sobre el marco
@@ -55,7 +63,7 @@ class GameView:
         
         # Sombra y Texto Neón
         render_sombra = fuente_lp.render(lp_texto, True, self.c.NEGRO)
-        render_lp = fuente_lp.render(lp_texto, True, self.c.COLOR_NEON)
+        render_lp = fuente_lp.render(lp_texto, True, self.c.NEON)
         ventana.blit(render_sombra, (455, 205)) 
         ventana.blit(render_lp, (450, 200))
 
