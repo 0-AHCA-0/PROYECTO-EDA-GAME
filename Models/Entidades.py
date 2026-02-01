@@ -13,7 +13,7 @@ class Player(Entidad):
         super().__init__(f"Jugador{id_player}", vida=100, dano=100)
         self.id = id_player
         self.clase = clase
-        self.vidas = 3
+        self.vidas = 5
         self.xp = 0
         self.nivel_evolucion = 1
         self.habilidad_actual = self.obtener_habilidad_inicial()

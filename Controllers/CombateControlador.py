@@ -1,5 +1,6 @@
 import pygame
 from Models.Entidades import Enemy
+from Models.Entidades import Player
 
 class CombateControlador:
     """
@@ -16,7 +17,7 @@ class CombateControlador:
         self.jugador = modelo.obtener_jugador_actual()
         
         # Sincronizamos vidas máximas para la barra de la vista
-        self.jugador.vidas_max = 3
+        self.jugador.vidas_max = 5
         
         # Crear enemigo con dificultad basada en el nivel del jugador
         dificultad = max(1, self.jugador.nivel_evolucion)
