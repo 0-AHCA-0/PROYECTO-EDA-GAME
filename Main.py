@@ -13,12 +13,11 @@ from Controllers.MapControlador import Mapcontrolador
 from Controllers.EvolucionControlador import EvolucionControlador
 from Controllers.CombateControlador import CombateControlador
 
-
 class JuegoEcos:
     def __init__(self):
         pygame.init()
         self.ventana = pygame.display.set_mode((930, 600))
-        pygame.display.set_caption("LEYENDAS ELEMENTALES - Proyecto Final")
+        pygame.display.set_caption("LEYENDAS ELEMENTALES")
         self.reloj = pygame.time.Clock()
 
         # 1. Componentes de Datos y Configuración
@@ -31,13 +30,13 @@ class JuegoEcos:
         self.v_estructuras = Estructura_Vista(self.config)
         self.v_combate = Combate_Vista(self.config)
 
-        # 3. Instanciar Controladores (Pasándoles lo que necesitan)
+        # 3. Instanciar Controladores
         self.c_menu = MenuControlador(self.model)
         self.c_mapa = Mapcontrolador(self.model, self.v_estructuras)
         self.c_evo = EvolucionControlador(self.model)
-        self.c_combate = None  # Se inicializa cuando comienza el combate
+        self.c_combate = None 
 
-        self.estado = "MENU" # Estados: MENU, SELECCION, JUEGO, EVOLUCION, COMBATE, DERROTA
+        self.estado = "MENU"
         self.ejecutando = True
 
     def ejecutar(self):
@@ -47,7 +46,7 @@ class JuegoEcos:
                 if evento.type == pygame.QUIT:
                     self.ejecutando = False
 
-            # --- LÓGICA DE CONTROLADORES (Por Clics) ---
+            # --- LÓGICA DE ESTADOS ---
             if self.estado == "MENU":
                 self.estado = self.c_menu.inicio(eventos)
             
@@ -55,72 +54,68 @@ class JuegoEcos:
                 self.estado = self.c_menu.seleccion(eventos)
             
             elif self.estado == "JUEGO":
-                # El MapController retorna el resultado del encuentro (Premio, Muerte, etc.)
                 resultado = self.c_mapa.gestionar_movimiento(eventos)
                 if resultado:
-                    if resultado.get("Tipo") == "Muerte":
-                        # Iniciar combate
+                    if resultado["Tipo"] == "Combate":
                         self.c_combate = CombateControlador(self.model, self.v_combate)
                         self.estado = "COMBATE"
+                    elif resultado["Tipo"] == "Muerte":
+                        self.estado = "DERROTA"
                     elif resultado.get("SubioNivel"):
                         self.estado = "EVOLUCION"
-            
+
             elif self.estado == "COMBATE":
-                self.estado = self.c_combate.ejecutar(eventos)
-                if self.estado == "JUEGO":
-                    # Cambiar turno después de combate ganado
-                    self.model.cambiar_turno()
-                elif self.estado == "DERROTA":
-                    pass  # Se mostrará la pantalla de derrota
-            
+                if self.c_combate:
+                    self.estado = self.c_combate.ejecutar(eventos)
+                else:
+                    self.estado = "JUEGO"
+
             elif self.estado == "EVOLUCION":
                 self.estado = self.c_evo.ejecutar(eventos, self.v_estructuras)
-            
-            elif self.estado == "DERROTA":
-                # Esperar a que el jugador presione reintentar
-                for evento in eventos:
-                    if evento.type == pygame.MOUSEBUTTONDOWN:
-                        if self.v_combate.rect_boton_reinicio.collidepoint(evento.pos):
-                            # Reiniciar el juego
-                            self.estado = "MENU"
-                            self.model = GameModel()
-                            self.c_menu = MenuControlador(self.model)
-                            self.c_mapa = Mapcontrolador(self.model, self.v_estructuras)
-                            self.c_evo = EvolucionControlador(self.model)
 
-            # --- RENDERIZADO (Vistas) ---
+            # --- RENDERIZADO ---
+            self.ventana.fill(self.config.NEGRO)
+
             if self.estado == "MENU":
                 self.v_menu.dibujar_menu(self.ventana)
             
             elif self.estado == "SELECCION":
                 self.v_menu.dibujar_seleccion_clase(self.ventana)
             
-            elif self.estado == "JUEGO":
+            # --- CAMBIO AQUÍ: JUEGO Y EVOLUCION COMPARTEN FONDO ---
+            elif self.estado in ["JUEGO", "EVOLUCION"]:
                 jugador = self.model.obtener_jugador_actual()
-                nombre_carta = self.model.info_visual()
-                self.v_juego.dibujar_interfaz(self.ventana, jugador, nombre_carta)
-                self.v_estructuras.dibujar_mapa_grafo(self.ventana, self.model)
-            
-            elif self.estado == "EVOLUCION":
-                # Pasamos la lógica del árbol a la vista para elegir habilidad
-                self.v_estructuras.dibujar_arbol_habilidades(self.ventana, self.model)
+                if jugador:
+                    nombre_carta = self.model.info_visual()
+                    
+                    # 1. Dibujamos la interfaz base (Aquí es donde sale Elmo si XP >= 100)
+                    self.v_juego.dibujar_interfaz(self.ventana, jugador, nombre_carta, jugador.nodo_actual)
+                    
+                    # 2. Dibujamos el elemento superior según el estado
+                    if self.estado == "JUEGO":
+                        self.v_estructuras.dibujar_mapa_grafo(self.ventana, self.model)
+                    else:
+                        # Si es EVOLUCION, el árbol se dibuja encima de la interfaz de Elmo
+                        self.v_estructuras.dibujar_arbol_habilidades(self.ventana, self.model)
             
             elif self.estado == "COMBATE":
                 jugador = self.model.obtener_jugador_actual()
-                enemigo = self.c_combate.obtener_enemigo()
-                log = self.c_combate.obtener_log()
-                self.v_combate.dibujar_combate(self.ventana, jugador, enemigo, log)
-            
+                if self.c_combate and jugador:
+                    self.v_combate.dibujar_combate(
+                        self.ventana, 
+                        jugador, 
+                        self.c_combate.enemigo, 
+                        self.c_combate.log_daño
+                    )
+
             elif self.estado == "DERROTA":
-                jugador = self.model.obtener_jugador_actual()
-                self.v_combate.dibujar_derrota(self.ventana, f"El {self.c_combate.enemigo.nombre} fue más fuerte...")
+                self.v_combate.dibujar_derrota(self.ventana, "Has caído en combate...")
 
             pygame.display.flip()
             self.reloj.tick(60)
 
         pygame.quit()
         sys.exit()
-
 
 if __name__ == "__main__":
     juego = JuegoEcos()

@@ -28,18 +28,22 @@ class Player(Entidad):
     #Funcion para saber cuando debe subir de nivel el jugador.
     def ganar_xp(self, cantidad):
         self.xp += cantidad
-        #Sistema de evolucion basado de 1 en 1
-        # Nivel 2 (100XP), siguiente nivel 200 XP asi sucesivamente
+        subio = False
+        
+        # Si llega a 100 o más, sube nivel y podemos resetear o restar los 100
         if self.xp >= 100 and self.nivel_evolucion < 3:
-            self.nivel_evolucion +=1
-            return True
-        return False
+            self.nivel_evolucion += 1
+            self.xp = 0  # Reiniciamos para que la barra vuelva a empezar
+            subio = True
+            print(f"¡{self.nombre} ha evolucionado al Nivel {self.nivel_evolucion}!")
+        
+        return subio
     
 class Enemy(Entidad):
     def __init__(self, nombre, dificultad):
         super().__init__(
             nombre,
-            vida=20 * dificultad,
+            vida=50 * dificultad,
             dano=5 * dificultad
         )
         self.dificultad = dificultad

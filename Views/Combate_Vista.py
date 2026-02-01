@@ -6,83 +6,78 @@ class Combate_Vista:
     def __init__(self, config):
         self.c = config
         self.ruta_proyecto = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        # Rectángulos para detección de clics (Colisiones)
+        # Rectángulo para el botón de ataque
         self.rect_boton_hab = pygame.Rect(350, 480, 230, 60)
-        self.rect_boton_reinicio = pygame.Rect(365, 450, 200, 50)
 
     def dibujar_combate(self, ventana, jugador, enemigo, log_daño):
-        """Renderiza la escena de batalla según las instrucciones"""
-        # 1. Fondo de batalla personalizado
+        # 1. FONDO
         try:
             ruta_fondo = os.path.join(self.ruta_proyecto, "Imagenes", "Fondo_Combate.png")
             fondo = pygame.image.load(ruta_fondo)
             fondo = pygame.transform.scale(fondo, (930, 600))
             ventana.blit(fondo, (0, 0))
         except:
-            ventana.fill((40, 20, 20)) # Respaldo visual si no carga la imagen
+            ventana.fill((30, 10, 10))
 
-        # 2. Lógica de la Carta del Jugador (Lado Izquierdo)
-        tiempo = pygame.time.get_ticks() / 1000  
-        flotacion = math.sin(tiempo) * 10 # Efecto seno para movimiento fluido
-        rect_carta = pygame.Rect(100, 150 + flotacion, 220, 310)
+        # 2. DIBUJAR PERSONAJES (Efecto flotante)
+        tiempo = pygame.time.get_ticks() / 1000
+        flotacion = math.sin(tiempo) * 10
         
-        # Marco Neón consistente con Interfaz_conf
-        pygame.draw.rect(ventana, (10, 10, 10), rect_carta) 
-        pygame.draw.rect(ventana, self.c.NEON, rect_carta, 6) 
-
-        # 3. Imagen del Enemigo (Lado Derecho)
+        # Jugador
         try:
-            ruta_ene = os.path.join(self.ruta_proyecto, "Imagenes", "Enemy.png")
-            img_ene = pygame.image.load(ruta_ene)
-            img_ene = pygame.transform.scale(img_ene, (260, 260))
-            ventana.blit(img_ene, (600, 160))
+            ruta_p = os.path.join(self.ruta_proyecto, "Imagenes", f"P_{jugador.clase}.png")
+            img_p = pygame.image.load(ruta_p)
+            img_p = pygame.transform.scale(img_p, (200, 260))
+            ventana.blit(img_p, (100, 150 + flotacion))
         except:
-            # Si no hay imagen, dibuja un círculo representativo
-            pygame.draw.circle(ventana, (220, 40, 40), (730, 290), 90)
+            pygame.draw.rect(ventana, (0, 255, 0), (100, 150 + flotacion, 200, 260))
 
-        # 4. Barras de Salud (LP)
-        # Vida Jugador (Basado en Entidades.py)
-        self._barra_vida(ventana, 100, 480, jugador.vidas, 10, (50, 255, 50), "Jugador")
-        # Vida Enemigo (Basado en el modelo de combate)
-        self._barra_vida(ventana, 600, 480, enemigo.vidas, enemigo.vidas_max, (255, 50, 50), "Enemigo")
+        # Enemigo
+        try:
+            ruta_e = os.path.join(self.ruta_proyecto, "Imagenes", "Enemigo.png")
+            img_e = pygame.image.load(ruta_e)
+            img_e = pygame.transform.scale(img_e, (200, 260))
+            ventana.blit(img_e, (630, 150 - flotacion))
+        except:
+            pygame.draw.rect(ventana, (255, 0, 0), (630, 150 - flotacion, 200, 260))
 
-        # 5. Botón de Habilidad Actual
-        pygame.draw.rect(ventana, self.c.NEGRO, self.rect_boton_hab, border_radius=12)
-        pygame.draw.rect(ventana, self.c.NEON, self.rect_boton_hab, 3, border_radius=12)
+        # 3. BARRAS DE VIDA (Aquí es donde fallaba)
+        # TÚ: usa .vidas (cantidad de corazones)
+        self._barra_vida(ventana, 100, 450, jugador.vidas, jugador.vidas_max, (0, 255, 0), "TU VIDA")
         
-        # Muestra dinámicamente la habilidad del grafo
-        txt_hab = self.c.f_chica.render(f"HAB: {jugador.habilidad_actual}", True, self.c.BLANCO)
-        ventana.blit(txt_hab, (self.rect_boton_hab.x + 15, self.rect_boton_hab.y + 18))
+        # ENEMIGO: usa .vida (puntos numéricos)
+        self._barra_vida(ventana, 630, 450, enemigo.vida, enemigo.vidas_max, (255, 0, 0), enemigo.nombre)
 
-        # 6. Panel de Log de Daño
+        # 4. BOTÓN DE ATAQUE
+        pygame.draw.rect(ventana, self.c.NEON, self.rect_boton_hab, border_radius=10)
+        txt_boton = self.c.f_chica.render(f"ATACAR CON {jugador.habilidad_actual}", True, self.c.NEGRO)
+
+        # centrado del boton
+        txt_rect = txt_boton.get_rect(center=self.rect_boton_hab.center)
+        ventana.blit(txt_boton, txt_rect)
+
+        # 5. LOG DE COMBATE
         txt_log = self.c.f_chica.render(log_daño, True, self.c.BLANCO)
-        ventana.blit(txt_log, (350, 40))
+        ventana.blit(txt_log, (465 - txt_log.get_width()//2, 50))
 
+    # --- MÉTODO QUE FALTABA ---
     def _barra_vida(self, ventana, x, y, actual, maximo, color, nombre):
-        """Dibuja una barra de salud proporcional"""
-        ancho_b = 220
-        ratio = max(0, min(actual / maximo, 1))
-        pygame.draw.rect(ventana, (60, 60, 60), (x, y, ancho_b, 25)) # Fondo gris
-        pygame.draw.rect(ventana, color, (x, y, int(ancho_b * ratio), 25)) # Vida real
-        info = self.c.f_chica.render(f"{nombre}: {actual}", True, self.c.BLANCO)
-        ventana.blit(info, (x, y - 30))
-
-    def dibujar_derrota(self, ventana, mensaje_sistema):
-        """Pantalla de Game Over activada por jugador.vivo = False"""
-        # Capa de oscuridad
-        s = pygame.Surface((930, 600))
-        s.set_alpha(210)
-        s.fill((10, 0, 0))
-        ventana.blit(s, (0, 0))
-
-        # Mensaje "Te jalaste EDO"
-        tit = self.c.f_grande.render("HAS PERDIDO", True, (255, 0, 0))
-        msg = self.c.f_chica.render(mensaje_sistema, True, self.c.BLANCO)
+        """Dibuja la barra de salud proporcional"""
+        ancho_total = 200
+        # Evitar división por cero
+        ratio = max(0, min(actual / maximo if maximo > 0 else 0, 1))
         
-        ventana.blit(tit, (320, 200))
-        ventana.blit(msg, (310, 300))
+        # Fondo gris
+        pygame.draw.rect(ventana, (50, 50, 50), (x, y, ancho_total, 20), border_radius=5)
+        # Barra de color
+        if ratio > 0:
+            pygame.draw.rect(ventana, color, (x, y, int(ancho_total * ratio), 20), border_radius=5)
+        
+        # Texto del nombre
+        txt = self.c.f_chica.render(f"{nombre}: {actual}", True, self.c.BLANCO)
+        ventana.blit(txt, (x, y - 25))
 
-        # Botón de Reinicio
-        pygame.draw.rect(ventana, self.c.BLANCO, self.rect_boton_reinicio, border_radius=10)
-        txt_btn = self.c.f_chica.render("REINTENTAR", True, self.c.NEGRO)
-        ventana.blit(txt_btn, (self.rect_boton_reinicio.x + 45, self.rect_boton_reinicio.y + 12))
+    def dibujar_derrota(self, ventana, msj):
+        ventana.fill((50, 0, 0))
+        txt = self.c.f_grande.render("GAME OVER", True, (255, 255, 255))
+        ventana.blit(txt, (300, 250))

@@ -1,7 +1,6 @@
 import pygame
 from Models.Entidades import Enemy
 
-
 class CombateControlador:
     """
     Controlador de combate por turnos.
@@ -11,96 +10,89 @@ class CombateControlador:
     def __init__(self, modelo, vista):
         """
         Inicializa el controlador de combate.
-        
-        Args:
-            modelo: Instancia de GameModel con los jugadores.
-            vista: Instancia de Combate_Vista para renderizar.
         """
         self.modelo = modelo
         self.vista = vista
         self.jugador = modelo.obtener_jugador_actual()
         
+        # Sincronizamos vidas máximas para la barra de la vista
+        self.jugador.vidas_max = 3
+        
         # Crear enemigo con dificultad basada en el nivel del jugador
         dificultad = max(1, self.jugador.nivel_evolucion)
         self.enemigo = Enemy("Enemigo", dificultad)
-        self.enemigo.vidas_max = self.enemigo.vida  # Para la barra de vida
+        
+        # Ajustamos la vida del enemigo para que el combate dure (ej: 50 HP)
+        self.enemigo.vida = 50 * dificultad
+        self.enemigo.vidas_max = self.enemigo.vida  
         
         # Log de combate
-        self.log_daño = "Inicia el combate..."
+        self.log_daño = "¡Un enemigo aparece! Prepárate."
         self.combate_activo = True
     
     def ejecutar(self, eventos):
         """
         Procesa los eventos del combate.
-        
-        Args:
-            eventos: Lista de eventos de Pygame.
-            
-        Returns:
-            str: "JUEGO" para volver al mapa, "DERROTA" si el jugador muere,
-                 "COMBATE" para continuar el combate.
         """
+        # Si el combate ya terminó (victoria o derrota), esperamos un clic para salir
         if not self.combate_activo:
-            return self._obtener_estado_final()
+            for evento in eventos:
+                if evento.type == pygame.MOUSEBUTTONDOWN:
+                    return self._obtener_estado_final()
+            return "COMBATE"
         
+        # Lógica de interacción durante el combate
         for evento in eventos:
             if evento.type == pygame.MOUSEBUTTONDOWN:
-                # Detección de clic en el botón de habilidad
+                # Detección de clic en el botón de habilidad definido en la vista
                 if self.vista.rect_boton_hab.collidepoint(evento.pos):
-                    return self._procesar_ataque()
+                    return self._logica_ataque()
         
         return "COMBATE"
     
-    def _procesar_ataque(self):
+    def _logica_ataque(self):
         """
-        Ejecuta la lógica de ataque del jugador.
-        
-        Returns:
-            str: "JUEGO" si el enemigo muere, "DERROTA" si el jugador muere,
-                 "COMBATE" para continuar.
+        Ejecuta la lógica de ataque del jugador y contraataque enemigo.
         """
-        # Calcular daño con variación
-        daño = self.jugador.dano
-        self.enemigo.vida -= daño
+        # 1. ATAQUE DEL JUGADOR
+        # Bajamos el daño a 10 para que el enemigo de 50 HP dure 5 turnos
+        daño_jugador = 10 
+        self.enemigo.vida -= daño_jugador
         
-        # Log del ataque
-        self.log_daño = f"Usaste {self.jugador.habilidad_actual} y causaste {daño} de daño"
+        # Actualizamos el log para que el usuario vea qué pasó
+        self.log_daño = f"¡{self.jugador.habilidad_actual} causó {daño_jugador} de daño!"
         
-        # Verificar si el enemigo murió
+        # 2. VERIFICAR VICTORIA
         if self.enemigo.vida <= 0:
+            self.enemigo.vida = 0
+            self.log_daño = "¡VICTORIA! Haz clic en cualquier lugar para continuar."
             self.combate_activo = False
-            self.log_daño = f"¡{self.enemigo.nombre} fue derrotado!"
-            return "JUEGO"
+            return "COMBATE" # No salimos todavía para que se lea el log
         
-        # Contraataque del enemigo
-        daño_enemigo = self.enemigo.dano
+        # 3. CONTRAATAQUE DEL ENEMIGO
+        # El enemigo quita 1 vida (un corazón)
         self.jugador.vidas -= 1
-        self.log_daño += f" | {self.enemigo.nombre} te atacó y perdiste 1 vida"
+        self.log_daño += f" | {self.enemigo.nombre} te quitó 1 corazón"
         
-        # Verificar si el jugador murió
+        # 4. VERIFICAR DERROTA
         if self.jugador.vidas <= 0:
+            self.jugador.vidas = 0
             self.jugador.vivo = False
             self.combate_activo = False
-            return "DERROTA"
+            # Al ser derrota, el Main nos llevará a la pantalla de Game Over tras el clic
+            return "COMBATE" 
         
         return "COMBATE"
     
     def _obtener_estado_final(self):
-        """
-        Retorna el estado final del combate.
-        
-        Returns:
-            str: "JUEGO" o "DERROTA" según el resultado.
-        """
+        """Retorna el estado al que debe cambiar el Main."""
         if self.jugador.vivo:
-            return "JUEGO"
+            return "JUEGO" # Regresa al mapa
         else:
-            return "DERROTA"
-    
+            return "DERROTA" # Va a pantalla de Game Over
+
     def obtener_log(self):
-        """Retorna el log actual de combate."""
         return self.log_daño
-    
+
     def obtener_enemigo(self):
-        """Retorna la referencia al enemigo."""
         return self.enemigo

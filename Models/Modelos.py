@@ -24,9 +24,15 @@ class GameModel:
     
     def obtener_jugador_actual(self):
         """Método único para obtener el jugador del turno"""
-        if self.jugadores:
-            return self.jugadores[self.turno_actual]
-        return None
+        # Si no hay jugadores registrados, devolver None
+        if not self.jugadores:
+            return None
+
+        # Si el índice de turno está fuera de rango (p. ej. tras reinicios), normalizarlo
+        if self.turno_actual < 0 or self.turno_actual >= len(self.jugadores):
+            self.turno_actual = 0
+
+        return self.jugadores[self.turno_actual]
     
     #Metodo para saber la clase y la habilidad del jugador
     def evolucionar_jugador(self):
