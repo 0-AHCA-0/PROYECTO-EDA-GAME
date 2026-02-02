@@ -41,7 +41,7 @@ class Combate_Vista:
         # Enemigo
         try:
             nodo = getattr(jugador, "nodo_actual", "")
-            nombre_enemigo = "Boss_Final.png" if nodo == "Piso 5" else "Enemigo.png"
+            nombre_enemigo = "Boris.png" if nodo == "Piso 5" else "Enemigo.png"
             ruta_e = modelo.rutas.obtener_ruta_personaje("Enemigo", nombre_enemigo)
             img_e = pygame.image.load(ruta_e)
             img_e = pygame.transform.scale(img_e, (200, 260))
