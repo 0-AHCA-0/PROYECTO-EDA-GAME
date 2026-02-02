@@ -103,3 +103,45 @@ class Estructura_Vista:
             txt_hab = self.c.f_chica.render(habilidad, True, self.c.NEGRO)
             txt_rect = txt_hab.get_rect(center=rect_boton.center)
             ventana.blit(txt_hab, txt_rect)
+    
+
+
+    # --- AGREGAR A Estructura_Vista.py ---
+
+    def dibujar_pantalla_muerte(self, ventana, modelo):
+        """Pantalla de transición cuando un jugador muere"""
+        # 1. Overlay oscuro (930x600 según tu Main)
+        overlay = pygame.Surface((930, 600), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 190)) 
+        ventana.blit(overlay, (0, 0))
+
+        jugador = modelo.obtener_jugador_actual()
+        hay_vivos = modelo.verificar_sobrevivientes()
+        
+        # 2. Título con sombra (Estilo Leyendas Elementales)
+        txt = f"¡{jugador.nombre.upper()} HA CAÍDO!"
+        sombra = self.c.f_grande.render(txt, True, self.c.NEGRO)
+        frente = self.c.f_grande.render(txt, True, (255, 50, 50)) # Rojo
+        
+        x_tit = (930 - frente.get_width()) // 2
+        ventana.blit(sombra, (x_tit + 3, 153))
+        ventana.blit(frente, (x_tit, 150))
+
+        # 3. Botón de Relevo / Reinicio
+        # Guardamos el rect para que el Main detecte el clic
+        self.rect_boton_muerte = pygame.Rect(315, 350, 300, 65)
+        
+        if modelo.modo_juego == 2 and hay_vivos:
+            msg_btn = "TURNO DEL COMPAÑERO"
+            color_borde = self.c.NEON
+        else:
+            msg_btn = "VOLVER AL MENÚ"
+            color_borde = (200, 50, 50)
+
+        # Dibujo con bordes redondeados (como tus otros botones)
+        pygame.draw.rect(ventana, self.c.BLANCO, self.rect_boton_muerte, border_radius=12)
+        pygame.draw.rect(ventana, color_borde, self.rect_boton_muerte, 4, border_radius=12)
+        
+        txt_btn = self.c.f_chica.render(msg_btn, True, self.c.NEGRO)
+        ventana.blit(txt_btn, (self.rect_boton_muerte.centerx - txt_btn.get_width()//2, 
+                            self.rect_boton_muerte.centery - txt_btn.get_height()//2))

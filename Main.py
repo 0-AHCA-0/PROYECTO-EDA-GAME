@@ -36,92 +36,85 @@ class JuegoEcos:
         # 3. Instanciar Controladores
         self.c_menu = MenuControlador(self.model)
         self.c_mapa = Mapcontrolador(self.model, self.v_estructuras)
-        self.c_evo = EvolucionControlador(self.model)
-        self.c_combate = None 
+        self.c_evolucion = EvolucionControlador(self.model)
+        self.c_combate = None # Se crea solo cuando entramos en combate
 
-        # Estado inicial
         self.estado = "MENU"
-        self.ejecutando = True
 
     def ejecutar(self):
-        while self.ejecutando:
+        ejecutando = True
+        while ejecutando:
             eventos = pygame.event.get()
             for evento in eventos:
                 if evento.type == pygame.QUIT:
-                    self.ejecutando = False
+                    ejecutando = False
+                
+                # --- LÓGICA DE CLIC PARA PANTALLA DE MUERTE ---
+                if self.estado == "PANTALLA_MUERTE":
+                    if evento.type == pygame.MOUSEBUTTONDOWN:
+                        if hasattr(self.v_estructuras, 'rect_boton_muerte'):
+                            if self.v_estructuras.rect_boton_muerte.collidepoint(evento.pos):
+                                if self.model.verificar_sobrevivientes():
+                                    self.model.cambiar_turno() # Ahora el turno cambia SOLO aquí
+                                    self.estado = "JUEGO"
+                                else:
+                                    self.estado = "MENU"
 
-            # ==========================================
-            # 1. LÓGICA DE CONTROLADORES (Inputs)
-            # ==========================================
+            # --- MÁQUINA DE ESTADOS (CONTROLADORES) ---
             if self.estado == "MENU":
-                # Retorna "SELECCION" si se elige 1P o 2P
                 self.estado = self.c_menu.inicio(eventos)
             
             elif self.estado == "SELECCION":
-                # Retorna "JUEGO" cuando se eligen las clases
                 self.estado = self.c_menu.seleccion(eventos)
             
             elif self.estado == "JUEGO":
-                # Retorna dict con evento {Tipo: "Combate"|"Premio"|"Muerte"}
                 resultado = self.c_mapa.gestionar_movimiento(eventos)
                 if resultado:
-                    if resultado["Tipo"] == "Combate":
-                        # Iniciamos el controlador de combate
+                    if resultado.get("Tipo") == "Combate":
                         self.c_combate = CombateControlador(self.model, self.v_combate)
                         self.estado = "COMBATE"
-                    elif resultado["Tipo"] == "Muerte":
-                        self.estado = "DERROTA"
+                    elif resultado.get("Tipo") == "Muerte" and not self.model.obtener_jugador_actual().vivo:
+                        self.estado = "PANTALLA_MUERTE"
                     elif resultado.get("SubioNivel"):
                         self.estado = "EVOLUCION"
 
+            elif self.estado == "EVOLUCION":
+                self.estado = self.c_evolucion.ejecutar(eventos, self.v_estructuras)
+
             elif self.estado == "COMBATE":
                 if self.c_combate:
-                    # Ejecuta lógica de turnos y retorna "JUEGO" si gana o "DERROTA" si pierde
-                    self.estado = self.c_combate.ejecutar(eventos)
-                else:
-                    self.estado = "JUEGO"
+                    nuevo_estado = self.c_combate.ejecutar(eventos)
+                    # Si el combate termina y el jugador murió
+                    if nuevo_estado == "JUEGO" and not self.model.obtener_jugador_actual().vivo:
+                        self.estado = "PANTALLA_MUERTE"
+                    else:
+                        self.estado = nuevo_estado
 
-            elif self.estado == "EVOLUCION":
-                # Retorna "JUEGO" una vez elegida la habilidad
-                self.estado = self.c_evo.ejecutar(eventos, self.v_estructuras)
-
-
-            # ==========================================
-            # 2. RENDERIZADO (Dibujo en Pantalla)
-            # ==========================================
+            # --- RENDERIZADO (VISTAS) ---
             self.ventana.fill(self.config.NEGRO)
 
             if self.estado == "MENU":
-                # CAMBIO: Pasamos self.model para que busque el fondo
                 self.v_menu.dibujar_menu(self.ventana, self.model)
             
             elif self.estado == "SELECCION":
-                # CAMBIO: Pasamos self.model para cargar imágenes dinámicas de clases
                 self.v_menu.dibujar_seleccion_clase(self.ventana, self.model)
             
             elif self.estado in ["JUEGO", "EVOLUCION"]:
-                # CAMBIO: Simplificado. La vista extrae todo del modelo.
                 self.v_juego.dibujar_interfaz(self.ventana, self.model)
-                
-                # Dibujamos Grafos o Árboles encima
                 if self.estado == "JUEGO":
                     self.v_estructuras.dibujar_mapa_grafo(self.ventana, self.model)
-                else: # EVOLUCION
+                else:
                     self.v_estructuras.dibujar_arbol_habilidades(self.ventana, self.model)
             
             elif self.estado == "COMBATE":
                 if self.c_combate:
-                    # 1. Dibujamos Fondo, Jugador y Enemigo (Usando Modelo)
-                    self.v_combate.dibujar_combate(
-                        self.ventana, 
-                        self.model, 
-                        self.c_combate.log_daño
-                    )
-                    # 2. Dibujamos la barra de vida del enemigo (Helper extra)
+                    self.v_combate.dibujar_combate(self.ventana, self.model, self.c_combate.log_daño)
                     self.v_combate.dibujar_enemigo_vida(self.ventana, self.c_combate.enemigo)
 
-            elif self.estado == "DERROTA":
-                self.v_combate.dibujar_derrota(self.ventana, "Has caído en combate...")
+            elif self.estado == "PANTALLA_MUERTE":
+                # Dibujamos el fondo del juego estático y encima el cartel de muerte
+                self.v_juego.dibujar_interfaz(self.ventana, self.model)
+                self.v_estructuras.dibujar_pantalla_muerte(self.ventana, self.model)
 
             pygame.display.flip()
             self.reloj.tick(60)
