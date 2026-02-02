@@ -35,14 +35,14 @@ class CombateControlador:
         """
         Procesa los eventos del combate.
         """
-        # Si el combate ya terminó (victoria o derrota), esperamos un clic para salir
+        # 1. SI EL COMBATE TERMINÓ: Esperamos un clic para salir al estado correspondiente
         if not self.combate_activo:
             for evento in eventos:
                 if evento.type == pygame.MOUSEBUTTONDOWN:
                     return self._obtener_estado_final()
             return "COMBATE"
         
-        # Lógica de interacción durante el combate
+        # 2. DURANTE EL COMBATE: Procesar ataques
         for evento in eventos:
             if evento.type == pygame.MOUSEBUTTONDOWN:
                 # Detección de clic en el botón de habilidad definido en la vista
@@ -56,41 +56,41 @@ class CombateControlador:
         Ejecuta la lógica de ataque del jugador y contraataque enemigo.
         """
         # 1. ATAQUE DEL JUGADOR
-        # Bajamos el daño a 10 para que el enemigo de 50 HP dure 5 turnos
         daño_jugador = 10 
         self.enemigo.vida -= daño_jugador
-        
-        # Actualizamos el log para que el usuario vea qué pasó
         self.log_daño = f"¡{self.jugador.habilidad_actual} causó {daño_jugador} de daño!"
         
-        # 2. VERIFICAR VICTORIA
+        # 2. VERIFICAR VICTORIA DEL JUGADOR
         if self.enemigo.vida <= 0:
             self.enemigo.vida = 0
-            self.log_daño = "¡VICTORIA! Haz clic en cualquier lugar para continuar."
+            self.log_daño = "¡VICTORIA! Haz clic para continuar."
             self.combate_activo = False
-            return "COMBATE" # No salimos todavía para que se lea el log
+            return "COMBATE"
         
         # 3. CONTRAATAQUE DEL ENEMIGO
-        # El enemigo quita 1 vida (un corazón)
+        # El enemigo quita 1 vida (corazón)
         self.jugador.vidas -= 1
         self.log_daño += f" | {self.enemigo.nombre} te quitó 1 corazón"
         
-        # 4. VERIFICAR DERROTA
+        # 4. VERIFICAR DERROTA DEL JUGADOR
         if self.jugador.vidas <= 0:
             self.jugador.vidas = 0
-            self.jugador.vivo = False
+            self.jugador.vivo = False # Marcamos al jugador como muerto para el relevo
             self.combate_activo = False
-            # Al ser derrota, el Main nos llevará a la pantalla de Game Over tras el clic
+            self.log_daño = "¡HAS CAÍDO EN COMBATE! Haz clic para el relevo."
             return "COMBATE" 
         
         return "COMBATE"
     
     def _obtener_estado_final(self):
-        """Retorna el estado al que debe cambiar el Main."""
+        """
+        Retorna el estado al que debe cambiar el Main.
+        """
         if self.jugador.vivo:
-            return "JUEGO" # Regresa al mapa
+            return "JUEGO" # Regresa al mapa si ganó
         else:
-            return "DERROTA" # Va a pantalla de Game Over
+            # CAMBIO CLAVE: Enviamos a la pantalla de relevo que ya programamos
+            return "PANTALLA_MUERTE" 
 
     def obtener_log(self):
         return self.log_daño

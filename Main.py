@@ -81,14 +81,18 @@ class JuegoEcos:
             elif self.estado == "EVOLUCION":
                 self.estado = self.c_evolucion.ejecutar(eventos, self.v_estructuras)
 
+
             elif self.estado == "COMBATE":
                 if self.c_combate:
+                    # Ejecutamos la lógica y recibimos el siguiente estado
                     nuevo_estado = self.c_combate.ejecutar(eventos)
-                    # Si el combate termina y el jugador murió
-                    if nuevo_estado == "JUEGO" and not self.model.obtener_jugador_actual().vivo:
+                    
+                    if nuevo_estado == "PANTALLA_MUERTE":
                         self.estado = "PANTALLA_MUERTE"
-                    else:
-                        self.estado = nuevo_estado
+                        self.c_combate = None # Limpiamos el controlador de combate
+                    elif nuevo_estado == "JUEGO":
+                        self.estado = "JUEGO"
+                        self.c_combate = None
 
             # --- RENDERIZADO (VISTAS) ---
             self.ventana.fill(self.config.NEGRO)
