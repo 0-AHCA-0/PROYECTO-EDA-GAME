@@ -19,9 +19,27 @@ class SistemaEncuentros:
             "Piso 5": "Jefe"
         }
         
+
+
     def rutas_posibles(self, nodo_actual):
-        #Retorna los caminos que el jugador puede tomar
-        return self.grafo_mapa.get(nodo_actual, [])
+        """
+        Retorna todos los caminos adyacentes (adelante y atrás) 
+        para permitir movimiento bidireccional infinito.
+        """
+        adyacentes = []
+        
+        # 1. Buscar conexiones hacia adelante (Destinos)
+        if nodo_actual in self.grafo_mapa:
+            adyacentes.extend(self.grafo_mapa[nodo_actual])
+        
+        # 2. Buscar conexiones hacia atrás (Orígenes)
+        # Recorremos el grafo buscando quién tiene al nodo_actual como destino
+        for origen, destinos in self.grafo_mapa.items():
+            if nodo_actual in destinos:
+                adyacentes.append(origen)
+                
+        # Retornamos la lista sin duplicados (por si una ruta fuera doble)
+        return list(set(adyacentes))
 
     #Luego se le agregaran porcentajes a los eventos 
     def generar_decision(self, nodo):

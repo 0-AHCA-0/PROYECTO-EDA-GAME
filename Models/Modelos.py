@@ -120,9 +120,45 @@ class GameModel:
         
         # Llamamos al gestor indicando que SI es combate
         return self.rutas.obtener_ruta_fondo(nodo, es_combate=True)
+    
+    # --- EN Modelos.py ---
 
-    # ------------------------------------------------------------------
-    # PERSISTENCIA
-    # ------------------------------------------------------------------
+    # --- EN Modelos.py ---
+
+    def procesar_movimiento(self, nombre_nodo):
+        """
+        Valida si el movimiento es posible antes de ejecutarlo.
+        """
+        jugador = self.obtener_jugador_actual()
+        if not jugador: return {"Tipo": "Nada"}
+
+        # --- VALIDACIÓN DE CONEXIÓN ---
+        # Obtenemos las rutas que están unidas al nodo donde está el jugador ahora
+        caminos_validos = self.encuentros.rutas_posibles(jugador.nodo_actual)
+        
+        # Si el usuario hace clic en un nodo lejano o no conectado, no hacemos nada
+        if nombre_nodo not in caminos_validos:
+            print(f"Movimiento inválido: {jugador.nodo_actual} no está unido a {nombre_nodo}")
+            return {"Tipo": "Nada"} 
+
+        # --- EJECUCIÓN DEL MOVIMIENTO ---
+        jugador.nodo_actual = nombre_nodo
+        print(f"Moviendo a: {nombre_nodo}")
+        
+        # Generamos el evento del nuevo nodo
+        resultado = self.encuentros.generar_decision(nombre_nodo)
+        
+        if resultado["Tipo"] == "Muerte":
+            jugador.vidas -= 1
+            if jugador.vidas <= 0:
+                jugador.vivo = False
+                
+        elif resultado["Tipo"] == "Premio":
+            resultado["SubioNivel"] = jugador.ganar_xp(resultado["Cantidad"])
+        
+        # Solo cambiamos de turno si el movimiento fue exitoso
+        self.cambiar_turno()
+        return resultado
+
     def guardar_todo(self):
         return self.datos.guardar_partida(self.jugadores)
