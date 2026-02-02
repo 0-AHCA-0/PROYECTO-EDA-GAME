@@ -53,14 +53,17 @@ class CombateControlador:
     
     def _logica_ataque(self):
         """
-        Ejecuta la lógica de ataque del jugador y contraataque enemigo.
+        Ejecuta la lógica de ataque por turnos usando el daño dinámico.
         """
         # 1. ATAQUE DEL JUGADOR
-        daño_jugador = 10 
-        self.enemigo.vida -= daño_jugador
-        self.log_daño = f"¡{self.jugador.habilidad_actual} causó {daño_jugador} de daño!"
+        # Extraemos el daño actual del objeto jugador (10, 20 o 30)
+        danio_jugador = self.jugador.dano 
+        self.enemigo.vida -= danio_jugador
         
-        # 2. VERIFICAR VICTORIA DEL JUGADOR
+        # Log que informa el daño realizado
+        self.log_daño = f"¡{self.jugador.habilidad_actual} causó {danio_jugador} de daño!"
+        
+        # 2. VERIFICAR VICTORIA
         if self.enemigo.vida <= 0:
             self.enemigo.vida = 0
             self.log_daño = "¡VICTORIA! Haz clic para continuar."
@@ -68,16 +71,15 @@ class CombateControlador:
             return "COMBATE"
         
         # 3. CONTRAATAQUE DEL ENEMIGO
-        # El enemigo quita 1 vida (corazón)
         self.jugador.vidas -= 1
         self.log_daño += f" | {self.enemigo.nombre} te quitó 1 corazón"
         
-        # 4. VERIFICAR DERROTA DEL JUGADOR
+        # 4. VERIFICAR DERROTA
         if self.jugador.vidas <= 0:
             self.jugador.vidas = 0
-            self.jugador.vivo = False # Marcamos al jugador como muerto para el relevo
+            self.jugador.vivo = False
             self.combate_activo = False
-            self.log_daño = "¡HAS CAÍDO EN COMBATE! Haz clic para el relevo."
+            self.log_daño = "¡HAS CAÍDO! Haz clic para el relevo."
             return "COMBATE" 
         
         return "COMBATE"
