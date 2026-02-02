@@ -10,24 +10,22 @@ class CombateControlador:
     
     def __init__(self, modelo, vista):
         """
-        Inicializa el controlador de combate.
+        Inicializa el controlador de combate sincronizando LPs con la vista.
         """
         self.modelo = modelo
         self.vista = vista
         self.jugador = modelo.obtener_jugador_actual()
         
-        # Sincronizamos vidas máximas para la barra de la vista
-        self.jugador.vidas_max = 5
+        self.jugador.vidas_max = self.jugador.vida_max 
         
         # Crear enemigo con dificultad basada en el nivel del jugador
         dificultad = max(1, self.jugador.nivel_evolucion)
         self.enemigo = Enemy("Enemigo", dificultad)
         
-        # Ajustamos la vida del enemigo para que el combate dure (ej: 50 HP)
+        # El enemigo también debe tener sincronizada su vida máxima para su barra
         self.enemigo.vida = 50 * dificultad
         self.enemigo.vidas_max = self.enemigo.vida  
         
-        # Log de combate
         self.log_daño = "¡Un enemigo aparece! Prepárate."
         self.combate_activo = True
     
@@ -53,15 +51,13 @@ class CombateControlador:
     
     def _logica_ataque(self):
         """
-        Ejecuta la lógica de ataque por turnos usando el daño dinámico.
+        Lógica de combate: Se restan LPs. 
+        Si llega a 0, se descuenta una Vida Global.
         """
         # 1. ATAQUE DEL JUGADOR
-        # Extraemos el daño actual del objeto jugador (10, 20 o 30)
         danio_jugador = self.jugador.dano 
         self.enemigo.vida -= danio_jugador
-        
-        # Log que informa el daño realizado
-        self.log_daño = f"¡{self.jugador.habilidad_actual} causó {danio_jugador} de daño!"
+        self.log_daño = f"¡{self.jugador.habilidad_actual} causó {danio_jugador} LP de daño!"
         
         # 2. VERIFICAR VICTORIA
         if self.enemigo.vida <= 0:
@@ -71,15 +67,24 @@ class CombateControlador:
             return "COMBATE"
         
         # 3. CONTRAATAQUE DEL ENEMIGO
-        self.jugador.vidas -= 1
-        self.log_daño += f" | {self.enemigo.nombre} te quitó 1 corazón"
+        # El enemigo hace daño numérico (ej: 15 LP)
+        daño_enemigo = self.enemigo.dano
+        self.jugador.vida -= daño_enemigo
+        self.log_daño += f" | {self.enemigo.nombre} te quitó {daño_enemigo} LP"
         
-        # 4. VERIFICAR DERROTA
-        if self.jugador.vidas <= 0:
-            self.jugador.vidas = 0
-            self.jugador.vivo = False
+        # 4. VERIFICAR DERROTA (Si los LPs llegan a 0)
+        if self.jugador.vida <= 0:
+            self.jugador.vidas -= 1       # Pierde 1 de las 3 vidas globales
+            self.jugador.vida = self.jugador.vida_max # Reset LPs para el siguiente intento
             self.combate_activo = False
-            self.log_daño = "¡HAS CAÍDO! Haz clic para el relevo."
+            
+            if self.jugador.vidas <= 0:
+                self.jugador.vidas = 0
+                self.jugador.vivo = False
+                self.log_daño = "¡DERROTA TOTAL! Has perdido todas tus vidas."
+            else:
+                self.log_daño = f"¡HAS CAÍDO! Te quedan {self.jugador.vidas} vidas globales."
+            
             return "COMBATE" 
         
         return "COMBATE"
@@ -91,7 +96,7 @@ class CombateControlador:
         if self.jugador.vivo:
             return "JUEGO" # Regresa al mapa si ganó
         else:
-            # CAMBIO CLAVE: Enviamos a la pantalla de relevo que ya programamos
+
             return "PANTALLA_MUERTE" 
 
     def obtener_log(self):

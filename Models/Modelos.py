@@ -42,8 +42,11 @@ class GameModel:
             intentos += 1
 
     def verificar_sobrevivientes(self):
-        """Retorna True si al menos un jugador sigue con vida."""
-        return any(p.vivo for p in self.jugadores)
+        """Retorna True si al menos un jugador tiene vidas y está vivo."""
+        for p in self.jugadores:
+            if p.vivo and p.vidas > 0:
+                return True
+        return False
 
     # ------------------------------------------------------------------
     # LOGICA DE JUEGO

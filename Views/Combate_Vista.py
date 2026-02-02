@@ -8,73 +8,77 @@ class Combate_Vista:
 
     def dibujar_combate(self, ventana, modelo, log_daño):
         jugador = modelo.obtener_jugador_actual()
-        
-        # 1. FONDO DE COMBATE (El modelo decide si es Boss o Comedor)
+        if not jugador: return
+
+        # 1. FONDO DE COMBATE (Mantengo tu lógica intacta)
         try:
             ruta_fondo = modelo.obtener_ruta_fondo_combate()
             fondo = pygame.image.load(ruta_fondo)
             fondo = pygame.transform.scale(fondo, (930, 600))
             ventana.blit(fondo, (0, 0))
-            
-            # Oscurecer un poco
             overlay = pygame.Surface((930, 600), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 100))
             ventana.blit(overlay, (0, 0))
         except:
             ventana.fill((30, 10, 10))
 
-        # 2. PERSONAJES (Efecto flotante)
+        # 2. PERSONAJES (Efecto flotante - Mantengo tu lógica)
         tiempo = pygame.time.get_ticks() / 1000
         flotacion = math.sin(tiempo) * 10
         
-        # --- JUGADOR ---
+        # Jugador
         try:
             ruta_pj = modelo.obtener_ruta_imagen_personaje()
             img_p = pygame.image.load(ruta_pj)
             img_p = pygame.transform.scale(img_p, (200, 260))
             ventana.blit(img_p, (100, 150 + flotacion))
-            
-            # Nombre Evolución
             nom_evo = modelo.info_visual()
             txt_p = self.c.f_chica.render(nom_evo, True, self.c.BLANCO)
             ventana.blit(txt_p, (100, 120 + flotacion))
         except:
             pygame.draw.rect(ventana, (0, 255, 0), (100, 150, 200, 260))
 
-        # --- ENEMIGO ---
-        # Nota: El enemigo no está 100% en el modelo aún, usamos búsqueda genérica
-        # a través del gestor de rutas del modelo
+        # Enemigo
         try:
             nodo = getattr(jugador, "nodo_actual", "")
             nombre_enemigo = "Boss_Final.png" if nodo == "Piso 5" else "Enemigo.png"
-            
-            # Usamos el gestor de rutas para buscar la imagen del enemigo
-            # (Truco: le pasamos el nombre del archivo como si fuera una evolución para que lo busque)
             ruta_e = modelo.rutas.obtener_ruta_personaje("Enemigo", nombre_enemigo)
-            
             img_e = pygame.image.load(ruta_e)
             img_e = pygame.transform.scale(img_e, (200, 260))
             ventana.blit(img_e, (630, 150 - flotacion))
         except:
             pygame.draw.rect(ventana, (255, 0, 0), (630, 150, 200, 260))
 
-        # 3. INTERFAZ (Barras y Botón)
-        # Necesitamos el objeto enemigo para la barra (lo pasamos en log o lo sacamos de algun lado)
-        # Como este metodo recibe (ventana, modelo, log), asumimos que el controlador maneja la logica.
-        # PERO: Para dibujar la vida del enemigo, normalmente necesitamos el objeto enemigo.
-        # Si no lo tenemos aqui, dibujaremos placeholder o necesitariamos pasarlo.
-        # *Asumiré que NO cambiamos la firma, pero mostraré barras genéricas si falta datos*
+        # ---------------------------------------------------------
+        # 3. INTERFAZ SINCRONIZADA (AQUÍ ESTÁ EL CAMBIO)
+        # ---------------------------------------------------------
         
-        # Barra Jugador
-        self._barra_vida(ventana, 100, 450, jugador.vidas, 5, (0, 255, 0), "TU VIDA")
+        # BARRA DE VIDA JUGADOR (LPs)
+        x_bar, y_bar = 100, 450
+        ancho_max = 250
+        # Calculamos el porcentaje de la barra (ej: 100/100 = 100%)
+        porcentaje = max(0, jugador.vida / jugador.vida_max)
         
-        # Botón Ataque
+        # Dibujar barra fondo y barra salud
+        pygame.draw.rect(ventana, (40, 40, 40), (x_bar, y_bar, ancho_max, 25)) # Fondo
+        color_barra = self.c.NEON if porcentaje > 0.3 else (255, 50, 50)
+        pygame.draw.rect(ventana, color_barra, (x_bar, y_bar, int(ancho_max * porcentaje), 25))
+        
+        # TEXTO DE LPs (Mostrará 100 LP, 85 LP, etc.)
+        txt_lp = self.c.f_chica.render(f"LP: {int(jugador.vida)} / {jugador.vida_max}", True, self.c.BLANCO)
+        ventana.blit(txt_lp, (x_bar, y_bar - 30))
+
+        # INDICADOR DE VIDAS GLOBALES (Los corazones/bolitas al lado)
+        for i in range(jugador.vidas):
+            pygame.draw.circle(ventana, (255, 0, 0), (x_bar + ancho_max + 30 + (i * 20), y_bar + 12), 8)
+
+        # BOTÓN ATAQUE
         pygame.draw.rect(ventana, self.c.NEON, self.rect_boton_hab, border_radius=10)
         hab_actual = getattr(jugador, "habilidad_actual", "Ataque")
         txt_btn = self.c.f_chica.render(f"ATACAR: {hab_actual}", True, self.c.NEGRO)
         ventana.blit(txt_btn, txt_btn.get_rect(center=self.rect_boton_hab.center))
 
-        # Log
+        # LOG DE COMBATE
         s = pygame.Surface((600, 40))
         s.set_alpha(150); s.fill((0,0,0))
         ventana.blit(s, (165, 30))
