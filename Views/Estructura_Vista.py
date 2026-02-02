@@ -8,11 +8,11 @@ class Estructura_Vista:
         
         # Coordenadas del mapa (Grafo)
         self.posiciones_mapa = {
-            "Inicio": (750, 500),
-            "Campus": (650, 380),
-            "Comedor": (850, 380),
-            "Ed39": (750, 250),
-            "Piso 5": (750, 100)
+            "Inicio": (820, 520),
+            "Campus": (750, 410),
+            "Comedor": (890, 410),
+            "Ed39": (820, 300),
+            "Piso 5": (820, 150)
         }
         
         # Ruta base del proyecto
