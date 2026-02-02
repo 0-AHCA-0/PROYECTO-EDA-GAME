@@ -1,17 +1,14 @@
 import pygame
 import sys
 
-# Importación de modelos y configuración
+# Traemos todo lo necesario
 from Models.Modelos import GameModel
 from Views.Interfaz_conf import Interfaz_conf
-
-# Importación de todas las vistas
 from Views.Menu_Vista import Menu_Vista
 from Views.Juego_Vista import GameView
 from Views.Estructura_Vista import Estructura_Vista
 from Views.Combate_Vista import Combate_Vista
 
-# Importación de los controladores
 from Controllers.MenuControlador import MenuControlador
 from Controllers.MapControlador import Mapcontrolador
 from Controllers.EvolucionControlador import EvolucionControlador
@@ -25,25 +22,27 @@ class ControladorMaestro:
         pygame.display.set_caption("ECOS DE LA CARTA")
         self.reloj = pygame.time.Clock()
 
+        # El cerebro de los datos
         self.model = GameModel()
         
-        # Inicialización de las Vistas
+        # Seteamos las vistas
         self.v_menu = Menu_Vista(self.config)
         self.v_juego = GameView(self.config)
         self.v_estructuras = Estructura_Vista(self.config)
         self.v_combate = Combate_Vista(self.config)
 
-        # Inicialización de Controladores
+        # Controladores iniciales
         self.c_menu = MenuControlador(self.model)
-        # CORRECCIÓN: Asegúrate de que el nombre de la clase en MapControlador.py sea Mapcontrolador
         self.c_mapa = Mapcontrolador(self.model, self.v_estructuras)
         self.c_evolucion = EvolucionControlador(self.model)
-        self.c_combate = None 
         
+        # El estado inicial siempre es el MENU
         self.estado = "MENU"
+        self.c_combate = None
         self.mensaje_muerte = ""
 
     def ejecutar(self):
+        # El bucle principal del juego
         while True:
             eventos = pygame.event.get()
             for evento in eventos:
@@ -51,81 +50,72 @@ class ControladorMaestro:
                     pygame.quit()
                     sys.exit()
 
-            self._actualizar_logica(eventos)
+            self._actualizar(eventos)
             self._renderizar()
-
+            
             pygame.display.flip()
             self.reloj.tick(60)
 
-    def _actualizar_logica(self, eventos):
+    def _actualizar(self, eventos):
+        # Aca manejamos a donde va el jugador
         if self.estado == "MENU":
-            nuevo = self.c_menu.inicio(eventos)
-            if nuevo: self.estado = nuevo
-
+            self.estado = self.c_menu.inicio(eventos)
+        
         elif self.estado == "SELECCION":
-            nuevo = self.c_menu.seleccion(eventos)
-            if nuevo: self.estado = nuevo
+            self.estado = self.c_menu.seleccion(eventos)
 
         elif self.estado == "JUEGO":
-            resultado = self.c_mapa.gestionar_movimiento(eventos)
-            if resultado:
-                # El modelo retorna un dict con el tipo de encuentro
-                if resultado.get("Tipo") == "Combate":
+            res = self.c_mapa.gestionar_movimiento(eventos)
+            if res:
+                if res["Tipo"] == "Combate":
                     self.c_combate = CombateControlador(self.model, self.v_combate)
                     self.estado = "COMBATE"
-                elif resultado.get("Tipo") == "Muerte":
-                    self.mensaje_muerte = resultado.get("Mensaje", "Has caído")
+                elif res["Tipo"] == "Muerte":
+                    self.mensaje_muerte = res["Mensaje"]
                     self.estado = "PANTALLA_MUERTE"
-                
-                # Verificar si subió de nivel para ir a evolución
-                if resultado.get("SubioNivel"):
+                elif res.get("SubioNivel"):
                     self.estado = "EVOLUCION"
 
         elif self.estado == "EVOLUCION":
-            # Pasamos la vista porque el controlador necesita los rects de los botones
-            nuevo = self.c_evolucion.ejecutar(eventos, self.v_estructuras)
-            if nuevo: self.estado = nuevo
+            self.estado = self.c_evolucion.ejecutar(eventos, self.v_estructuras)
 
         elif self.estado == "COMBATE":
             if self.c_combate:
-                nuevo_estado = self.c_combate.ejecutar(eventos)
-                if nuevo_estado != "COMBATE":
-                    self.estado = nuevo_estado
-                    # Limpiamos el controlador de combate al salir
+                nuevo = self.c_combate.ejecutar(eventos)
+                if nuevo != "COMBATE":
+                    # Si perdio en combate, guardamos el log para mostrarlo
+                    if nuevo == "PANTALLA_MUERTE":
+                        self.mensaje_muerte = self.c_combate.log_daño
+                    self.estado = nuevo
                     self.c_combate = None
 
         elif self.estado == "PANTALLA_MUERTE":
-            for evento in eventos:
-                if evento.type == pygame.MOUSEBUTTONDOWN:
-                    # Usamos el rect que tu Estructura_Vista ya crea en dibujar_pantalla_muerte
-                    if self.v_estructuras.rect_boton_muerte.collidepoint(evento.pos):
+            for ev in eventos:
+                if ev.type == pygame.MOUSEBUTTONDOWN:
+                    # Si toca el boton de la pantalla de muerte
+                    if self.v_estructuras.rect_boton_muerte.collidepoint(ev.pos):
+                        jugador = self.model.obtener_jugador_actual()
                         
-                        # USAMOS LO QUE YA TIENES: verificar_sobrevivientes del Modelo
-                        hay_vivos = self.model.verificar_sobrevivientes()
-                        
-                        if self.model.modo_juego == 2 and hay_vivos:
-                            # Si hay alguien vivo, usamos tu función cambiar_turno()
+                        # Si todavia tiene corazones, vuelve al mapa
+                        if jugador.vidas > 0:
+                            self.estado = "JUEGO"
+                        # Si es 2P y el otro sigue vivo, cambia el turno
+                        elif self.model.modo_juego == 2 and self.model.verificar_sobrevivientes():
                             self.model.cambiar_turno()
                             self.estado = "JUEGO"
                         else:
-                            # Si es 1P o no queda nadie, reiniciamos todo al menú
-                            # Creamos un modelo nuevo para limpiar los datos de la partida
-                            self.model = GameModel()
-                            # Re-vinculamos los controladores al nuevo modelo
-                            self.c_menu = MenuControlador(self.model)
-                            self.c_mapa = Mapcontrolador(self.model, self.v_estructuras)
-                            self.c_evolucion = EvolucionControlador(self.model)
+                            # Game Over total, reseteamos todo el objeto
+                            self.__init__() 
                             self.estado = "MENU"
 
     def _renderizar(self):
+        # Dibujamos todo segun el estado
         self.ventana.fill(self.config.NEGRO)
 
         if self.estado == "MENU":
             self.v_menu.dibujar_menu(self.ventana, self.model)
         
         elif self.estado == "SELECCION":
-            # ¡OJO AQUÍ! Si Menu_Vista no tiene esta función, el juego crashea.
-            # Asegúrate de haberla implementado en Menu_Vista.py
             self.v_menu.dibujar_seleccion_clase(self.ventana, self.model)
         
         elif self.estado in ["JUEGO", "EVOLUCION"]:
@@ -142,4 +132,4 @@ class ControladorMaestro:
 
         elif self.estado == "PANTALLA_MUERTE":
             self.v_juego.dibujar_interfaz(self.ventana, self.model)
-            self.v_estructuras.dibujar_pantalla_muerte(self.ventana, self.model)
+            self.v_estructuras.dibujar_pantalla_muerte(self.ventana, self.model, self.mensaje_muerte)
