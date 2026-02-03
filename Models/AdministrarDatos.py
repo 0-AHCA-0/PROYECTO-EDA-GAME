@@ -1,41 +1,39 @@
-import csv
+import json
 import os
-#Clase para inicializar los atributos de la carta (personaje) y jugardarlos en un csv, para luego cargarlo.
+
 class AdministrarDatos:
-    
-    def __init__(self, archivo="datos/proceso.csv"):
+    def __init__(self, archivo="datos/sesion_juego.json"):
         self.archivo = archivo
-        
-    def guardar_partida(self, players):
+        # Asegura que la carpeta exista
+        os.makedirs(os.path.dirname(self.archivo), exist_ok=True)
+
+    def guardar_sesion(self, jugadores, modo, turno):
+        data = {
+            "config": {"modo": modo, "turno": turno},
+            "jugadores": [
+                {
+                    "id": p.id,
+                    "clase": p.clase,
+                    "vidas": p.vidas,
+                    "hp": p.vida,
+                    "xp": p.xp,
+                    "nivel": p.nivel_evolucion,
+                    "hab": p.habilidad_actual,
+                    "nodo": p.nodo_actual
+                } for p in jugadores
+            ]
+        }
         try:
-            with open(self.archivo, mode='w', newline='', encoding='utf-8') as f:
-                write = csv.writer(f)
-                write.writerow(["ID","Clase", "Vidas", "XP", "Evolucion", "Habilidad"])
-                for p in players:
-                    write.writerow([p.id, p.clase, p.vidas, p.xp, p.nivel_evolucion, p.habilidad_actual])
-            return True
+            with open(self.archivo, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=4)
         except Exception as e:
-            print(f"Error al guardar: {e}")
-            return False
-    
-    #Funcion para retomar el juego (Se puede usar para retomar la partida)
-    def cargar_partida(self):
-        partida = []
-        try:
-            with open(self.archivo, mode='r', encoding='utf-8') as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    partida.append(row)
-            return partida
-        except FileNotFoundError:
+            print(f"Error al escribir JSON: {e}")
+
+    def cargar_sesion(self):
+        if not os.path.exists(self.archivo):
             return None
-    
-    # Guarda el proceso de los jugadores, si no hay captura la excepcion
-    def leer_csv_completo(self):
         try:
-            with open(self.archivo, mode='r', encoding='utf-8') as f:
-                datos = list(csv.DictReader(f))
-                return datos if datos else None
-        except FileNotFoundError:
+            with open(self.archivo, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except:
             return None
-                

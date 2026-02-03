@@ -1,0 +1,28 @@
+{
+    "config": {
+        "modo": 2,
+        "turno": 1
+    },
+    "jugadores": [
+        {
+            "id": 1,
+            "clase": "Agua",
+            "vidas": 3,
+            "hp": 120,
+            "xp": 0,
+            "nivel": 2,
+            "hab": "Sana Sana",
+            "nodo": "Comedor"
+        },
+        {
+            "id": 2,
+            "clase": "Fuego",
+            "vidas": 3,
+            "hp": 100,
+            "xp": 50,
+            "nivel": 1,
+            "hab": "Chispa",
+            "nodo": "Comedor"
+        }
+    ]
+}

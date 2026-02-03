@@ -6,23 +6,20 @@ class Entidad:
 
 class Player(Entidad):
     def __init__(self, id_player, clase):
-        # Super: Nombre, Vida (LPs iniciales), Daño inicial
         super().__init__(f"Jugador{id_player}", 100, 10)
         self.id = id_player
         self.clase = clase
         
-        # --- SISTEMA DE VIDAS ---
-        self.vidas = 3              # Vidas Globales (Corazones en el mapa)
-        self.vida_max = 100         # LPs máximos para la barra de combate
-        self.vida = 100             # LPs actuales (se consumen en combate)
+        # Atributos de supervivencia
+        self.vidas = 3              # Vidas globales (corazones)
+        self.vida_max = 100         # LPs máximos
+        self.vida = 100             # LPs actuales
+        self.vivo = True            # <--- CRÍTICO
         
+        # Atributos de progreso
         self.xp = 0
         self.nivel_evolucion = 1
-        
-        # Esta es la función que faltaba y causaba el error:
         self.habilidad_actual = self.obtener_habilidad_inicial()
-        
-        self.vivo = True
         self.nodo_actual = "Inicio"
 
     def obtener_habilidad_inicial(self):

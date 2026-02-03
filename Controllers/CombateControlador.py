@@ -1,6 +1,5 @@
 import pygame
 from Models.Entidades import Enemy
-from Models.Entidades import Player
 
 class CombateControlador:
     """
@@ -10,40 +9,45 @@ class CombateControlador:
     
     def __init__(self, modelo, vista):
         """
-        Inicializa el controlador de combate sincronizando LPs con la vista.
+        Inicializa el combate y vincula al enemigo con el modelo para que la vista lo vea.
         """
         self.modelo = modelo
         self.vista = vista
         self.jugador = modelo.obtener_jugador_actual()
         
-        self.jugador.vidas_max = self.jugador.vida_max 
-        
-        # Crear enemigo con dificultad basada en el nivel del jugador
+        # 1. Crear enemigo basado en el nivel del jugador
         dificultad = max(1, self.jugador.nivel_evolucion)
         self.enemigo = Enemy("Enemigo", dificultad)
         
-        # El enemigo también debe tener sincronizada su vida máxima para su barra
-        self.enemigo.vida = 50 * dificultad
-        self.enemigo.vidas_max = self.enemigo.vida  
+        # Sincronizar vida máxima para la barra de la vista
+        self.enemigo.vida_max = 50 * dificultad
+        self.enemigo.vida = self.enemigo.vida_max
+        
+        # 2. VINCULACIÓN CRÍTICA: Guardamos el enemigo en el modelo
+        # Esto permite que la vista lo encuentre al hacer: modelo.encuentros.enemigo_actual
+        self.modelo.encuentros.enemigo_actual = self.enemigo
         
         self.log_daño = "¡Un enemigo aparece! Prepárate."
         self.combate_activo = True
-    
+        self.victoria = False
+        self.derrota = False
+
     def ejecutar(self, eventos):
         """
         Procesa los eventos del combate.
         """
-        # 1. SI EL COMBATE TERMINÓ: Esperamos un clic para salir al estado correspondiente
+        # Si el combate ya terminó, esperamos un clic para transicionar de estado
         if not self.combate_activo:
             for evento in eventos:
                 if evento.type == pygame.MOUSEBUTTONDOWN:
+                    # Limpiamos el enemigo del modelo al salir para liberar memoria
+                    self.modelo.encuentros.enemigo_actual = None
                     return self._obtener_estado_final()
             return "COMBATE"
         
-        # 2. DURANTE EL COMBATE: Procesar ataques
+        # Procesar ataque si el jugador hace clic en el botón de habilidad
         for evento in eventos:
             if evento.type == pygame.MOUSEBUTTONDOWN:
-                # Detección de clic en el botón de habilidad definido en la vista
                 if self.vista.rect_boton_hab.collidepoint(evento.pos):
                     return self._logica_ataque()
         
@@ -51,36 +55,34 @@ class CombateControlador:
     
     def _logica_ataque(self):
         """
-        Lógica de combate: Se restan LPs. 
-        Si llega a 0, se descuenta una Vida Global.
+        Lógica de intercambio de daño.
         """
-        # 1. ATAQUE DEL JUGADOR
+        # 1. TURNO DEL JUGADOR
         danio_jugador = self.jugador.dano 
         self.enemigo.vida -= danio_jugador
-        self.log_daño = f"¡{self.jugador.habilidad_actual} causó {danio_jugador} LP de daño!"
+        self.log_daño = f"¡{self.jugador.habilidad_actual} causó {danio_jugador} de daño!"
         
-        # 2. VERIFICAR VICTORIA
+        # Verificar si el enemigo murió
         if self.enemigo.vida <= 0:
             self.enemigo.vida = 0
             self.log_daño = "¡VICTORIA! Haz clic para continuar."
             self.combate_activo = False
+            self.victoria = True
             return "COMBATE"
         
-        # 3. CONTRAATAQUE DEL ENEMIGO
-        # El enemigo hace daño numérico (ej: 15 LP)
+        # 2. TURNO DEL ENEMIGO (Contraataque)
         daño_enemigo = self.enemigo.dano
         self.jugador.vida -= daño_enemigo
-        self.log_daño += f" | {self.enemigo.nombre} te quitó {daño_enemigo} LP"
+        self.log_daño += f" | El enemigo te quitó {daño_enemigo} HP"
         
-        # 4. VERIFICAR DERROTA (Si los LPs llegan a 0)
+        # Verificar si el jugador murió (HP llega a 0)
         if self.jugador.vida <= 0:
-            self.jugador.vidas -= 1       # Pierde 1 de las 3 vidas globales
-            self.jugador.vida = self.jugador.vida_max # Reset LPs para el siguiente intento
+            self.jugador.vida = 0
+            self.jugador.vidas -= 1  # Restar vida global
             self.combate_activo = False
+            self.derrota = True
             
             if self.jugador.vidas <= 0:
-                self.jugador.vidas = 0
-                self.jugador.vivo = False
                 self.log_daño = "¡DERROTA TOTAL! Has perdido todas tus vidas."
             else:
                 self.log_daño = f"¡HAS CAÍDO! Te quedan {self.jugador.vidas} vidas globales."
@@ -91,16 +93,19 @@ class CombateControlador:
     
     def _obtener_estado_final(self):
         """
-        Retorna el estado al que debe cambiar el Main.
+        Determina a qué estado debe ir el ControladorMaestro al cerrar el combate.
         """
-        if self.jugador.vivo:
-            return "JUEGO" # Regresa al mapa si ganó
-        else:
-
-            return "PANTALLA_MUERTE" 
+        if self.victoria:
+            # Gana XP y verifica si sube de nivel (evolución)
+            subio = self.jugador.ganar_xp(30)
+            return "EVOLUCION" if subio else "JUEGO"
+        
+        if self.derrota:
+            # Si perdió, el HP se resetea para que pueda seguir jugando si le quedan vidas
+            self.jugador.vida = self.jugador.vida_max
+            return "PANTALLA_MUERTE"
+        
+        return "JUEGO"
 
     def obtener_log(self):
         return self.log_daño
-
-    def obtener_enemigo(self):
-        return self.enemigo

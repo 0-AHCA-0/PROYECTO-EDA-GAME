@@ -105,41 +105,55 @@ class Estructura_Vista:
             ventana.blit(txt_hab, txt_rect)
     
     def dibujar_pantalla_muerte(self, ventana, modelo, mensaje=""):
-        """Pantalla de transición dinámica"""
+        """Pantalla de muerte con variantes para EDO, EDA (Final) y normal."""
+        # 1. CAPA OSCURA (El efecto 'oscurito')
         overlay = pygame.Surface((930, 600), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 190)) 
+        overlay.fill((20, 0, 0, 215)) 
         ventana.blit(overlay, (0, 0))
 
         jugador = modelo.obtener_jugador_actual()
-        hay_vivos = modelo.verificar_sobrevivientes()
+        if not jugador: return
         
-        # 1. Título principal
-        txt_titulo = "¡CUIDADO!" if jugador.vidas > 0 else f"¡{jugador.nombre.upper()} HA CAÍDO!"
-        color_titulo = (255, 200, 0) if jugador.vidas > 0 else (255, 50, 50) # Naranja si vive, Rojo si muere
+        # Detectar si estamos en el jefe final
+        es_final = getattr(jugador, "nodo_actual", "") == "Piso 5"
         
-        frente = self.c.f_grande.render(txt_titulo, True, color_titulo)
-        ventana.blit(frente, ((930 - frente.get_width()) // 2, 150))
+        # 2. CONFIGURACIÓN DE TEXTOS SEGÚN EL TIPO DE DERROTA
+        if es_final:
+            txt_titulo = "PROYECTO RECHAZADO"
+            # Sobrescribimos el mensaje para la batalla final
+            mensaje_cuerpo = "REPROBASTE EDA"
+            color_tema = (255, 0, 0) # Rojo puro
+        elif "EDO" in mensaje.upper():
+            txt_titulo = "FALLO ACADÉMICO"
+            mensaje_cuerpo = mensaje # "¡TE JALASTE EDO!"
+            color_tema = (255, 80, 0) # Naranja fuego
+        else:
+            txt_titulo = "SESIÓN SUSPENDIDA"
+            mensaje_cuerpo = mensaje
+            color_tema = (200, 200, 200)
 
-        # 2. MOSTRAR EL MENSAJE DEL MODELO (Ej: "Te jalaste EDO. Pierdes una vida")
-        txt_msg = self.c.f_chica.render(mensaje, True, self.c.BLANCO)
-        ventana.blit(txt_msg, (465 - txt_msg.get_width()//2, 250))
+        # Dibujar Título
+        frente = self.c.f_grande.render(txt_titulo, True, color_tema)
+        ventana.blit(frente, (465 - frente.get_width()//2, 180))
 
-        # 3. Botón Dinámico
-        self.rect_boton_muerte = pygame.Rect(315, 380, 300, 65)
+        # Dibujar Cuerpo (El mensaje específico)
+        txt_msg = self.c.f_chica.render(mensaje_cuerpo, True, (255, 255, 255))
+        ventana.blit(txt_msg, (465 - txt_msg.get_width()//2, 280))
+
+        # 3. BOTÓN DINÁMICO (Ajustado: Estudiarmas)
+        self.rect_boton_muerte = pygame.Rect(315, 400, 300, 60)
         
         if jugador.vidas > 0:
-            msg_btn = "CONTINUAR"
-            color_borde = (0, 255, 0) # Verde
-        elif modelo.modo_juego == 2 and hay_vivos:
-            msg_btn = "TURNO DEL COMPAÑERO"
-            color_borde = self.c.NEON
+            # Cambio solicitado: Sin paréntesis, solo Estudiarmas
+            msg_btn = "ESTUDIAR MAS"
+            color_borde = (0, 255, 120) 
         else:
-            msg_btn = "VOLVER AL MENÚ"
-            color_borde = (200, 50, 50)
+            msg_btn = "RETIRAR CICLO"
+            color_borde = (255, 50, 50)
 
-        pygame.draw.rect(ventana, self.c.BLANCO, self.rect_boton_muerte, border_radius=12)
+        pygame.draw.rect(ventana, (30, 30, 30), self.rect_boton_muerte, border_radius=12)
         pygame.draw.rect(ventana, color_borde, self.rect_boton_muerte, 4, border_radius=12)
         
-        txt_btn = self.c.f_chica.render(msg_btn, True, self.c.NEGRO)
+        txt_btn = self.c.f_chica.render(msg_btn, True, (255, 255, 255))
         ventana.blit(txt_btn, (self.rect_boton_muerte.centerx - txt_btn.get_width()//2, 
                             self.rect_boton_muerte.centery - txt_btn.get_height()//2))
