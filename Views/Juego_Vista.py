@@ -52,7 +52,7 @@ class GameView:
         for i in range(jugador.vidas):
             # Si tienes una imagen de corazón: ventana.blit(img, (x, y))
             # Por ahora usamos círculos rojos como placeholders de corazones
-            pygame.draw.circle(ventana, (255, 50, 50), (x_info_base + 80 + (i * 25), 160), 8)
+            pygame.draw.circle(ventana, (255, 50, 50), (x_info_base + 110 + (i * 25), 160), 8)
 
         # --- B. PUNTOS DE VIDA (LPs Reales) ---
         # Mostramos los LPs que se usarán en el combate

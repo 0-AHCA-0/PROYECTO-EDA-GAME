@@ -6,13 +6,13 @@
     "jugadores": [
         {
             "id": 1,
-            "clase": "Aire",
-            "vidas": 1,
-            "hp": 60,
-            "xp": 40,
-            "nivel": 2,
-            "hab": "Afixia",
-            "nodo": "Piso 5"
+            "clase": "Agua",
+            "vidas": 3,
+            "hp": 100,
+            "xp": 0,
+            "nivel": 1,
+            "hab": "Burbuja",
+            "nodo": "Inicio"
         }
     ]
 }
