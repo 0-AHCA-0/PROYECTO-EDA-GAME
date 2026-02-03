@@ -7,11 +7,11 @@
         {
             "id": 1,
             "clase": "Agua",
-            "vidas": 1,
-            "hp": 120,
-            "xp": 0,
+            "vidas": 0,
+            "hp": 0,
+            "xp": 80,
             "nivel": 2,
-            "hab": "Sana Sana",
+            "hab": "Squirt",
             "nodo": "Piso 5"
         }
     ]

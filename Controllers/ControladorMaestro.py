@@ -1,7 +1,7 @@
 import pygame
 import sys
 
-# Importación de Modelos, Vistas y Controladores
+# Importacion de Modelos, Vistas y Controladores
 from Models.Modelos import GameModel
 from Views.Interfaz_conf import Interfaz_conf
 from Views.Menu_Vista import Menu_Vista
@@ -19,6 +19,7 @@ class ControladorMaestro:
         pygame.init()
         self.config = Interfaz_conf()
         
+        # Parche de seguridad para fuentes
         if not hasattr(self.config, 'f_media'):
             self.config.f_media = self.config.f_chica
 
@@ -26,13 +27,16 @@ class ControladorMaestro:
         pygame.display.set_caption("ECOS DE LA CARTA")
         self.reloj = pygame.time.Clock()
 
+        # Inicializacion del Modelo
         self.model = GameModel()
         
+        # Vistas
         self.v_menu = Menu_Vista(self.config)
         self.v_juego = GameView(self.config)
         self.v_estructuras = Estructura_Vista(self.config)
         self.v_combate = Combate_Vista(self.config)
 
+        # Controladores
         self.c_menu = MenuControlador(self.model)
         self.c_mapa = Mapcontrolador(self.model, self.v_estructuras)
         self.c_evolucion = EvolucionControlador(self.model)
@@ -42,6 +46,7 @@ class ControladorMaestro:
         self.msg_muerte = ""
 
     def ejecutar(self):
+        """Bucle principal del juego"""
         while True:
             eventos = pygame.event.get()
             for evento in eventos:
@@ -57,6 +62,8 @@ class ControladorMaestro:
             self.reloj.tick(60)
 
     def _gestionar_estados(self, eventos):
+        """Maneja las transiciones entre pantallas y la persistencia de turnos"""
+        
         if self.estado == "MENU":
             res = self.c_menu.inicio(eventos)
             if res == "SELECCION": self.estado = "SELECCION"
@@ -68,18 +75,19 @@ class ControladorMaestro:
                 self.estado = "JUEGO"
 
         elif self.estado == "JUEGO":
+            # El turno NO cambia por click en el mapa, solo se procesa el movimiento
             res = self.c_mapa.gestionar_movimiento(eventos)
             if res:
                 if res["Tipo"] == "Combate":
                     self.c_combate = CombateControlador(self.model, self.v_combate)
                     self.estado = "COMBATE"
                 elif res["Tipo"] == "Muerte":
-                    self.msg_muerte = res.get("Mensaje", "Has caído")
+                    # Solo llegamos aqui por trampas directas como Ed39
+                    self.msg_muerte = res.get("Mensaje", "Has caido")
                     self.estado = "PANTALLA_MUERTE"
                     self._guardar_progreso()
                 elif res["Tipo"] == "Premio":
-                    # --- CORRECCIÓN AQUÍ ---
-                    # Eliminamos self.model.cambiar_turno(). El jugador sigue su turno tras el premio.
+                    # El jugador sigue su turno tras un premio o comedor
                     if res.get("SubioNivel"): 
                         self.estado = "EVOLUCION"
                     self._guardar_progreso()
@@ -87,17 +95,27 @@ class ControladorMaestro:
         elif self.estado == "COMBATE":
             if self.c_combate:
                 res = self.c_combate.ejecutar(eventos)
+                # Si el combate termino
                 if res != "COMBATE":
-                    self.estado = res # Puede ir a EVOLUCION o JUEGO
+                    if self.c_combate.derrota:
+                        # Si el controlador marca derrota es porque perdio TODAS las vidas
+                        jugador = self.model.obtener_jugador_actual()
+                        if getattr(jugador, "nodo_actual", "") == "Piso 5":
+                            self.msg_muerte = "REPROBASTE EDA"
+                        else:
+                            self.msg_muerte = "No lograste superar el examen"
+                        self.estado = "PANTALLA_MUERTE"
+                    else:
+                        # Si gano, el estado puede ser JUEGO o EVOLUCION
+                        self.estado = res
+                    
                     self.c_combate = None
                     self._guardar_progreso()
 
         elif self.estado == "EVOLUCION":
             res = self.c_evolucion.ejecutar(eventos, self.v_estructuras)
             if res == "JUEGO":
-                # --- CORRECCIÓN AQUÍ ---
-                # Quitamos el cambio de turno automático para que el jugador 
-                # pueda ver su nueva forma y seguir moviéndose.
+                # Mantenemos el turno para que el jugador pruebe su evolucion
                 self.estado = "JUEGO"
                 self._guardar_progreso()
         
@@ -108,21 +126,24 @@ class ControladorMaestro:
                         jugador_actual = self.model.obtener_jugador_actual()
                         hay_vivos = self.model.verificar_sobrevivientes()
 
+                        # Si el jugador perdio sus 3 vidas globales
                         if jugador_actual.vidas <= 0:
                             if self.model.modo_juego == 2 and hay_vivos:
-                                # Aquí SÍ cambiamos de turno porque el jugador actual murió
+                                # Pasa al compañero y se guarda en el JSON
                                 self.model.cambiar_turno()
                                 self.estado = "JUEGO"
                             else:
+                                # Fin del juego para todos
                                 self.__init__() 
                                 self.estado = "MENU"
                         else:
-                            # Si solo perdió una vida (le quedan globales), reintenta él mismo
+                            # Reintenta (Estudiar mas) porque aun le quedan corazones
                             self.estado = "JUEGO"
                         
                         self._guardar_progreso()
 
     def _guardar_progreso(self):
+        """Guarda el estado actual en el archivo JSON"""
         if self.model.jugadores:
             self.model.datos.guardar_sesion(
                 self.model.jugadores, 
@@ -131,7 +152,9 @@ class ControladorMaestro:
             )
 
     def _dibujar(self):
+        """Renderizado segun el estado actual"""
         self.ventana.fill(self.config.NEGRO)
+
         if self.estado == "MENU":
             self.v_menu.dibujar_menu(self.ventana, self.model)
         elif self.estado == "SELECCION":
