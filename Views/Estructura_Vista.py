@@ -128,7 +128,7 @@ class Estructura_Vista:
             mensaje_cuerpo = mensaje # "¡TE JALASTE EDO!"
             color_tema = (255, 80, 0) # Naranja fuego
         else:
-            txt_titulo = "SESIÓN SUSPENDIDA"
+            txt_titulo = "NO LOGRASTE ENTRAR"
             mensaje_cuerpo = mensaje
             color_tema = (200, 200, 200)
 

@@ -51,6 +51,18 @@ class Player(Entidad):
 
 class Enemy(Entidad):
     def __init__(self, nombre, dificultad):
-        # El enemigo escala vida y daño según la dificultad del nodo
-        super().__init__(nombre, vida=50 * dificultad, dano=15 * dificultad)
-        self.vidas_max = self.vida # Necesario para que la barra de vida de la vista funcione
+        # El enemigo escala vida y daño según la dificultad
+        # Si es Boris, le damos el doble de vida que a un guardia normal
+        multiplicador_jefe = 2 if nombre == "Boris" else 1
+        hp_base = (50 * dificultad) * multiplicador_jefe
+        daño_base = 10 * dificultad
+        
+        # Llamada al constructor padre
+        super().__init__(nombre, vida=hp_base, dano=daño_base)
+        
+        # Atributos requeridos por la Combate_Vista para la barra de salud
+        self.vida_max = hp_base
+        self.vida = hp_base
+        
+        # Atributo informativo para la UI
+        self.es_jefe = (nombre == "Boris")

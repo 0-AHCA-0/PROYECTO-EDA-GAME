@@ -9,25 +9,28 @@ class CombateControlador:
     
     def __init__(self, modelo, vista):
         """
-        Inicializa el combate y vincula al enemigo con el modelo para que la vista lo vea.
+        Inicializa el combate, asigna nombres dinámicos y vincula al enemigo.
         """
         self.modelo = modelo
         self.vista = vista
         self.jugador = modelo.obtener_jugador_actual()
         
-        # 1. Crear enemigo basado en el nivel del jugador
+        # 1. Determinar el tipo de enemigo y dificultad
+        # Si está en el Piso 5, el enemigo es Boris
+        es_jefe = getattr(self.jugador, "nodo_actual", "") == "Piso 5"
+        nombre_e = "Boris" if es_jefe else "Guardia"
+        
+        # La dificultad escala con el nivel de evolución del jugador
         dificultad = max(1, self.jugador.nivel_evolucion)
-        self.enemigo = Enemy("Enemigo", dificultad)
         
-        # Sincronizar vida máxima para la barra de la vista
-        self.enemigo.vida_max = 50 * dificultad
-        self.enemigo.vida = self.enemigo.vida_max
+        # 2. Instanciar el enemigo
+        self.enemigo = Enemy(nombre_e, dificultad)
         
-        # 2. VINCULACIÓN CRÍTICA: Guardamos el enemigo en el modelo
-        # Esto permite que la vista lo encuentre al hacer: modelo.encuentros.enemigo_actual
+        # 3. VINCULACIÓN CON EL MODELO (Para que la vista lo encuentre)
         self.modelo.encuentros.enemigo_actual = self.enemigo
         
-        self.log_daño = "¡Un enemigo aparece! Prepárate."
+        # Log inicial dinámico
+        self.log_daño = f"¡{nombre_e} bloquea tu camino! Prepárate para el examen."
         self.combate_activo = True
         self.victoria = False
         self.derrota = False

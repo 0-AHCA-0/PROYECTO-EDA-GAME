@@ -46,11 +46,20 @@ class Combate_Vista:
         enemigo = modelo.encuentros.enemigo_actual
         try:
             nodo = getattr(jugador, "nodo_actual", "Campus")
-            # Si es el jefe final en Piso 5 usamos Boris, si no, Enemigo genérico
             nombre_img_enemigo = "Boris.png" if nodo == "Piso 5" else "Enemigo.png"
             ruta_e = modelo.rutas.obtener_ruta_personaje("Enemigo", nombre_img_enemigo)
             img_e = pygame.image.load(ruta_e)
             img_e = pygame.transform.scale(img_e, (200, 260))
+            
+            # --- NUEVO: DIBUJAR NOMBRE ARRIBA DEL ENEMIGO ---
+            if enemigo:
+                # Sacamos el nombre del objeto enemigo (ej: "Boris" o "Guardia")
+                nombre_texto = getattr(enemigo, "nombre", "Enemigo")
+                txt_nombre_e = self.c.f_chica.render(nombre_texto.upper(), True, (255, 100, 100))
+                # Lo centramos sobre la imagen del enemigo
+                pos_x_nombre = 730 - txt_nombre_e.get_width() // 2
+                ventana.blit(txt_nombre_e, (pos_x_nombre, 120 - flotacion))
+
             ventana.blit(img_e, (630, 150 - flotacion))
         except:
             pygame.draw.rect(ventana, (255, 0, 0), (630, 150, 200, 260), 2)

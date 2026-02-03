@@ -7,12 +7,12 @@
         {
             "id": 1,
             "clase": "Agua",
-            "vidas": 0,
+            "vidas": 1,
             "hp": 120,
             "xp": 0,
             "nivel": 2,
             "hab": "Sana Sana",
-            "nodo": "Ed39"
+            "nodo": "Piso 5"
         }
     ]
 }
