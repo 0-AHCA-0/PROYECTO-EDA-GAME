@@ -14,7 +14,7 @@ class GestorRutas:
             "Campus":  "Fondo_Universidad.png",
             "Comedor": "Fondo_Comedor.png",
             "Ed39":    "Fondo_Ed39.png",
-            "Piso 5":  "Fondo_Piso5.png"  
+            "Piso 5":  "Banios_P5.png"  
         }
 
         #Aqui se agregan las imagenes de fondo de combate
@@ -23,7 +23,7 @@ class GestorRutas:
             "Campus":  "Fondo_Universidad.png",
             "Comedor": "Fondo_Comedor.png",
             "Ed39":    "Fondo_Ed39.png",
-            "Piso 5":  "Fondo_Boss_Final.png" 
+            "Piso 5":  "Banios_P5.png" 
         }
 
     #funcion para obtener la ruta del fondo

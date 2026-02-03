@@ -1,7 +1,7 @@
 {
     "config": {
-        "modo": 2,
-        "turno": 1
+        "modo": 1,
+        "turno": 0
     },
     "jugadores": [
         {
@@ -11,18 +11,8 @@
             "hp": 120,
             "xp": 0,
             "nivel": 2,
-            "hab": "Squirt",
-            "nodo": "Piso 5"
-        },
-        {
-            "id": 2,
-            "clase": "Fuego",
-            "vidas": 3,
-            "hp": 100,
-            "xp": 0,
-            "nivel": 1,
-            "hab": "Chispa",
-            "nodo": "Inicio"
+            "hab": "Sana Sana",
+            "nodo": "Ed39"
         }
     ]
 }
