@@ -1,27 +1,17 @@
 {
     "config": {
-        "modo": 2,
-        "turno": 1
+        "modo": 1,
+        "turno": 0
     },
     "jugadores": [
         {
             "id": 1,
             "clase": "Aire",
-            "vidas": 0,
-            "hp": 140,
-            "xp": 0,
-            "nivel": 3,
-            "hab": "Patada Voladora",
-            "nodo": "Ed39"
-        },
-        {
-            "id": 2,
-            "clase": "Tierra",
             "vidas": 1,
             "hp": 60,
             "xp": 40,
             "nivel": 2,
-            "hab": "Lodo",
+            "hab": "Afixia",
             "nodo": "Piso 5"
         }
     ]

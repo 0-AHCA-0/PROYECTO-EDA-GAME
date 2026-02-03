@@ -28,11 +28,11 @@ class Vista_Final:
         ventana.blit(frente, ((930 - frente.get_width()) // 2, 150))
 
         # 3. Mensaje de Logro Academico
-        mensaje = f"Felicidades {jugador.nombre}. Has superado EDA y vencido a Boris."
+        mensaje = f"Felicidades {jugador.nombre}. Has aprobado EDA y vencido a Boris."
         txt_msg = self.c.f_chica.render(mensaje, True, (255, 255, 255))
         ventana.blit(txt_msg, (465 - txt_msg.get_width()//2, 260))
 
-        txt_sub = self.c.f_chica.render("Tu ciclo ha terminado con éxito.", True, (200, 200, 200))
+        txt_sub = self.c.f_chica.render("Tu cupo ha terminado con éxito.", True, (200, 200, 200))
         ventana.blit(txt_sub, (465 - txt_sub.get_width()//2, 300))
 
         # 4. Boton para volver al Menu

@@ -23,7 +23,7 @@ class CombateControlador:
         self.enemigo = Enemy(nombre_e, dificultad)
         self.modelo.encuentros.enemigo_actual = self.enemigo
         
-        self.log_daño = f"¡Un {nombre_e} aparece! No dejes que te repruebe."
+        self.log_daño = f"¡Un {nombre_e} aparece!"
         self.combate_activo = True
         self.victoria = False
         self.derrota = False
@@ -56,7 +56,7 @@ class CombateControlador:
         # Verificar si el enemigo murio
         if self.enemigo.vida <= 0:
             self.enemigo.vida = 0
-            self.log_daño = "¡Enemigo derrotado! Has pasado el examen."
+            self.log_daño = "¡Enemigo derrotado! Puedes continuar."
             self.combate_activo = False
             self.victoria = True
             return

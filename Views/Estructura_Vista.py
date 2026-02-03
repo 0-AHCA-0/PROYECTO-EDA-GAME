@@ -148,7 +148,7 @@ class Estructura_Vista:
             msg_btn = "ESTUDIAR MAS"
             color_borde = (0, 255, 120) 
         else:
-            msg_btn = "RETIRAR CICLO"
+            msg_btn = "ANULAR MATRICULA"
             color_borde = (255, 50, 50)
 
         pygame.draw.rect(ventana, (30, 30, 30), self.rect_boton_muerte, border_radius=12)
