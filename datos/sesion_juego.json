@@ -1,0 +1,18 @@
+{
+    "config": {
+        "modo": 1,
+        "turno": 0
+    },
+    "jugadores": [
+        {
+            "id": 1,
+            "clase": "Agua",
+            "vidas": 3,
+            "hp": 100,
+            "xp": 0,
+            "nivel": 1,
+            "hab": "Burbuja",
+            "nodo": "Inicio"
+        }
+    ]
+}
