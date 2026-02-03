@@ -7,22 +7,22 @@
         {
             "id": 1,
             "clase": "Agua",
-            "vidas": 3,
+            "vidas": 0,
             "hp": 120,
             "xp": 0,
             "nivel": 2,
-            "hab": "Sana Sana",
-            "nodo": "Comedor"
+            "hab": "Squirt",
+            "nodo": "Piso 5"
         },
         {
             "id": 2,
             "clase": "Fuego",
             "vidas": 3,
             "hp": 100,
-            "xp": 50,
+            "xp": 0,
             "nivel": 1,
             "hab": "Chispa",
-            "nodo": "Comedor"
+            "nodo": "Inicio"
         }
     ]
 }

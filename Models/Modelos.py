@@ -31,9 +31,19 @@ class GameModel:
         return self.jugadores[self.turno_actual]
 
     def cambiar_turno(self):
-        """Alterna el turno en modo 2P."""
-        if len(self.jugadores) < 2: return
-        self.turno_actual = (self.turno_actual + 1) % len(self.jugadores)
+            """Alterna al siguiente jugador que aún tenga vidas globales."""
+            if len(self.jugadores) < 2: return
+            
+            # Buscamos al siguiente jugador vivo
+            siguiente_turno = (self.turno_actual + 1) % len(self.jugadores)
+            
+            # Si el siguiente está muerto (vidas <= 0), intentamos con el otro
+            if self.jugadores[siguiente_turno].vidas <= 0:
+                # Si ambos están muertos, no cambia (el controlador maestro detectará el Game Over)
+                if self.jugadores[self.turno_actual].vidas <= 0:
+                    return 
+            else:
+                self.turno_actual = siguiente_turno
     
     def verificar_sobrevivientes(self):
         """Revisa si al menos un jugador sigue con vidas disponibles."""

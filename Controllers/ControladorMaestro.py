@@ -19,7 +19,6 @@ class ControladorMaestro:
         pygame.init()
         self.config = Interfaz_conf()
         
-        # Parche de seguridad para fuentes
         if not hasattr(self.config, 'f_media'):
             self.config.f_media = self.config.f_chica
 
@@ -27,16 +26,13 @@ class ControladorMaestro:
         pygame.display.set_caption("ECOS DE LA CARTA")
         self.reloj = pygame.time.Clock()
 
-        # Inicialización del Modelo
         self.model = GameModel()
         
-        # Vistas
         self.v_menu = Menu_Vista(self.config)
         self.v_juego = GameView(self.config)
         self.v_estructuras = Estructura_Vista(self.config)
         self.v_combate = Combate_Vista(self.config)
 
-        # Controladores
         self.c_menu = MenuControlador(self.model)
         self.c_mapa = Mapcontrolador(self.model, self.v_estructuras)
         self.c_evolucion = EvolucionControlador(self.model)
@@ -46,7 +42,6 @@ class ControladorMaestro:
         self.msg_muerte = ""
 
     def ejecutar(self):
-        """Bucle principal."""
         while True:
             eventos = pygame.event.get()
             for evento in eventos:
@@ -62,7 +57,6 @@ class ControladorMaestro:
             self.reloj.tick(60)
 
     def _gestionar_estados(self, eventos):
-        """Maneja las transiciones de pantalla."""
         if self.estado == "MENU":
             res = self.c_menu.inicio(eventos)
             if res == "SELECCION": self.estado = "SELECCION"
@@ -80,47 +74,55 @@ class ControladorMaestro:
                     self.c_combate = CombateControlador(self.model, self.v_combate)
                     self.estado = "COMBATE"
                 elif res["Tipo"] == "Muerte":
-                    # Aquí se captura el mensaje "¡TE JALASTE EDO!" del modelo
                     self.msg_muerte = res.get("Mensaje", "Has caído")
                     self.estado = "PANTALLA_MUERTE"
                     self._guardar_progreso()
                 elif res["Tipo"] == "Premio":
+                    # --- CORRECCIÓN AQUÍ ---
+                    # Eliminamos self.model.cambiar_turno(). El jugador sigue su turno tras el premio.
                     if res.get("SubioNivel"): 
                         self.estado = "EVOLUCION"
-                    else: 
-                        self.model.cambiar_turno()
                     self._guardar_progreso()
 
         elif self.estado == "COMBATE":
             if self.c_combate:
                 res = self.c_combate.ejecutar(eventos)
                 if res != "COMBATE":
-                    self.estado = res
+                    self.estado = res # Puede ir a EVOLUCION o JUEGO
                     self.c_combate = None
                     self._guardar_progreso()
 
         elif self.estado == "EVOLUCION":
             res = self.c_evolucion.ejecutar(eventos, self.v_estructuras)
             if res == "JUEGO":
-                self.model.cambiar_turno()
+                # --- CORRECCIÓN AQUÍ ---
+                # Quitamos el cambio de turno automático para que el jugador 
+                # pueda ver su nueva forma y seguir moviéndose.
                 self.estado = "JUEGO"
                 self._guardar_progreso()
         
         elif self.estado == "PANTALLA_MUERTE":
             for evento in eventos:
                 if evento.type == pygame.MOUSEBUTTONDOWN:
-                    # Si el botón de la vista muerte fue presionado
                     if self.v_estructuras.rect_boton_muerte.collidepoint(evento.pos):
-                        p = self.model.obtener_jugador_actual()
-                        if p and p.vidas > 0:
-                            self.model.cambiar_turno()
-                            self.estado = "JUEGO"
+                        jugador_actual = self.model.obtener_jugador_actual()
+                        hay_vivos = self.model.verificar_sobrevivientes()
+
+                        if jugador_actual.vidas <= 0:
+                            if self.model.modo_juego == 2 and hay_vivos:
+                                # Aquí SÍ cambiamos de turno porque el jugador actual murió
+                                self.model.cambiar_turno()
+                                self.estado = "JUEGO"
+                            else:
+                                self.__init__() 
+                                self.estado = "MENU"
                         else:
-                            self.__init__() # Reset total
-                            self.estado = "MENU"
+                            # Si solo perdió una vida (le quedan globales), reintenta él mismo
+                            self.estado = "JUEGO"
+                        
+                        self._guardar_progreso()
 
     def _guardar_progreso(self):
-        """Persistencia en JSON."""
         if self.model.jugadores:
             self.model.datos.guardar_sesion(
                 self.model.jugadores, 
@@ -129,25 +131,19 @@ class ControladorMaestro:
             )
 
     def _dibujar(self):
-        """Renderizado según estado."""
         self.ventana.fill(self.config.NEGRO)
-
         if self.estado == "MENU":
             self.v_menu.dibujar_menu(self.ventana, self.model)
-        
         elif self.estado == "SELECCION":
             self.v_menu.dibujar_seleccion_clase(self.ventana, self.model)
-        
         elif self.estado in ["JUEGO", "EVOLUCION"]:
             self.v_juego.dibujar_interfaz(self.ventana, self.model)
             if self.estado == "JUEGO":
                 self.v_estructuras.dibujar_mapa_grafo(self.ventana, self.model)
             else:
                 self.v_estructuras.dibujar_arbol_habilidades(self.ventana, self.model)
-        
         elif self.estado == "COMBATE":
             if self.c_combate:
                 self.v_combate.dibujar_combate(self.ventana, self.model, self.c_combate.log_daño)
-        
         elif self.estado == "PANTALLA_MUERTE":
             self.v_estructuras.dibujar_pantalla_muerte(self.ventana, self.model, self.msg_muerte)
