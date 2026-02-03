@@ -1,17 +1,27 @@
 {
     "config": {
-        "modo": 1,
-        "turno": 0
+        "modo": 2,
+        "turno": 1
     },
     "jugadores": [
         {
             "id": 1,
-            "clase": "Agua",
+            "clase": "Aire",
             "vidas": 0,
-            "hp": 0,
-            "xp": 80,
+            "hp": 140,
+            "xp": 0,
+            "nivel": 3,
+            "hab": "Patada Voladora",
+            "nodo": "Ed39"
+        },
+        {
+            "id": 2,
+            "clase": "Tierra",
+            "vidas": 1,
+            "hp": 60,
+            "xp": 40,
             "nivel": 2,
-            "hab": "Squirt",
+            "hab": "Lodo",
             "nodo": "Piso 5"
         }
     ]
