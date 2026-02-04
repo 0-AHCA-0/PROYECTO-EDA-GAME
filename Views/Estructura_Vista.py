@@ -45,7 +45,7 @@ class Estructura_Vista:
     def dibujar_arbol_habilidades(self, ventana, modelo):
         """Pantalla de seleccion de evolucion"""
         try:
-            ruta_img = os.path.join(self.ruta_proyecto, "Imagenes", "Fondo_Habilidad.jpg")
+            ruta_img = os.path.join(self.ruta_proyecto, "Imagenes", "Fondo_Habilidad.png")
             fondo = pygame.image.load(ruta_img)
             ventana.blit(pygame.transform.scale(fondo, (930, 600)), (0, 0))
         except:
