@@ -17,43 +17,46 @@ from Controllers.CombateControlador import CombateControlador
 
 class ControladorMaestro:
     def __init__(self):
-        # Inicializacion de pygame y configuracion base
+        # 1. INICIALIZACION DEL MOTOR Y CONFIGURACION
         pygame.init()
         self.config = Interfaz_conf()
         
-        # Parche de seguridad para fuentes
+        # Parche para asegurar que las fuentes existan antes de renderizar
         if not hasattr(self.config, 'f_media'):
             self.config.f_media = self.config.f_chica
 
-        # Configuracion de ventana y reloj
+        # Creacion de la superficie principal y reloj de control de tiempo
         self.ventana = pygame.display.set_mode((930, 600))
         pygame.display.set_caption("ECOS DE LA CARTA")
         self.reloj = pygame.time.Clock()
 
-        # Inicializacion del Modelo
+        # 2. INICIALIZACION DE LA ARQUITECTURA (MVC)
+        # El Modelo centraliza los datos del juego
         self.model = GameModel()
         
-        # Vistas del juego
+        # Inicializacion de todas las capas visuales
         self.v_menu = Menu_Vista(self.config)
         self.v_juego = GameView(self.config)
         self.v_estructuras = Estructura_Vista(self.config)
         self.v_combate = Combate_Vista(self.config)
         self.v_final = Vista_Final(self.config) 
 
-        # Controladores hijos
+        # Registro de controladores especificos para cada modulo
         self.c_menu = MenuControlador(self.model)
         self.c_mapa = Mapcontrolador(self.model, self.v_estructuras)
         self.c_evolucion = EvolucionControlador(self.model)
-        self.c_combate = None 
+        self.c_combate = None # Se instancia dinamicamente al iniciar pelea
         
-        # Estados y variables de texto sincronizadas con SistemaEncuentros
+        # 3. CONTROL DE ESTADOS Y TEXTOS DINAMICOS
+        # Estos textos se llenan con la info que viene del SistemaEncuentros
         self.estado = "MENU"
         self.msg_muerte = ""
         self.titulo_muerte = "" 
 
     def ejecutar(self):
-        """Bucle principal del juego"""
+        """Bucle infinito que mantiene el proceso vivo"""
         while True:
+            # Captura de eventos de entrada (Teclado, Mouse, Ventana)
             eventos = pygame.event.get()
             for evento in eventos:
                 if evento.type == pygame.QUIT:
@@ -61,14 +64,16 @@ class ControladorMaestro:
                     pygame.quit()
                     sys.exit()
 
+            # Procesamiento de logica y renderizado
             self._gestionar_estados(eventos)
             self._dibujar()
             
+            # Actualizacion de pantalla a 60 cuadros por segundo
             pygame.display.flip()
             self.reloj.tick(60)
 
     def _gestionar_estados(self, eventos):
-        """Maneja los cambios de estado usando la info del Sistema de Encuentros"""
+        """Maquina de estados que decide que controlador tiene el mando"""
         
         if self.estado == "MENU":
             res = self.c_menu.inicio(eventos)
@@ -81,23 +86,24 @@ class ControladorMaestro:
                 self.estado = "JUEGO"
 
         elif self.estado == "JUEGO":
-            # Capturamos la decision que genera el SistemaEncuentros
+            # El controlador de mapa nos dice que evento encontro el jugador
             res = self.c_mapa.gestionar_movimiento(eventos)
             if res:
-                # El controlador guarda el mensaje que definiste en el modelo
+                # Sincronizamos los mensajes de derrota definidos en el Modelo
                 self.msg_muerte = res.get("Mensaje", "HAS CAIDO")
                 
                 if res["Tipo"] == "Combate":
-                    # Si es combate, guardamos el titulo especifico (ej: PROYECTO RECHAZADO)
+                    # Cambia a combate y guarda el titulo (ej: PROYECTO RECHAZADO)
                     self.titulo_muerte = res.get("TituloMuerte", "FALLO ACADEMICO")
                     self.c_combate = CombateControlador(self.model, self.v_combate)
                     self.estado = "COMBATE"
                 elif res["Tipo"] == "Muerte":
-                    # Muerte directa por trampa o guardia en mapa
+                    # Muerte por trampa: directo a pantalla de derrota
                     self.titulo_muerte = res.get("Titulo", "FALLO ACADEMICO")
                     self.estado = "PANTALLA_MUERTE"
                     self._guardar_progreso()
                 elif res["Tipo"] == "Premio":
+                    # Si el premio da suficiente XP para nivel, vamos a EVOLUCION
                     if res.get("SubioNivel"): 
                         self.estado = "EVOLUCION"
                     self._guardar_progreso()
@@ -108,14 +114,13 @@ class ControladorMaestro:
                 if res != "COMBATE":
                     if self.c_combate.victoria:
                         jugador = self.model.obtener_jugador_actual()
-                        # Verificamos si gano en el ultimo nodo
+                        # Si vence a Boris en el Piso 5, termina el juego
                         if getattr(jugador, "nodo_actual", "") == "Piso 5":
                             self.estado = "VICTORIA_FINAL"
                         else:
                             self.estado = res 
                     elif self.c_combate.derrota:
-                        # Al morir, el estado cambia a muerte
-                        # El titulo y mensaje ya se guardaron al entrar al nodo en JUEGO
+                        # Los textos de muerte ya se guardaron al entrar al nodo
                         self.estado = "PANTALLA_MUERTE"
                     
                     self.c_combate = None
@@ -130,20 +135,22 @@ class ControladorMaestro:
         elif self.estado == "PANTALLA_MUERTE":
             for evento in eventos:
                 if evento.type == pygame.MOUSEBUTTONDOWN:
+                    # Detectamos clic en el boton de reintento/salida
                     if self.v_estructuras.rect_boton_muerte.collidepoint(evento.pos):
                         jugador_actual = self.model.obtener_jugador_actual()
                         hay_vivos = self.model.verificar_sobrevivientes()
 
                         if jugador_actual.vidas <= 0:
+                            # Si no hay vidas, revisamos si el compañero sigue vivo (Modo 2P)
                             if self.model.modo_juego == 2 and hay_vivos:
                                 self.model.cambiar_turno()
                                 self.estado = "JUEGO"
                             else:
-                                # Reset total si no hay mas vidas/jugadores
+                                # Game Over total: reiniciamos el objeto Controlador
                                 self.__init__() 
                                 self.estado = "MENU"
                         else:
-                            # Reintento si aun tiene vidas
+                            # Aun tiene corazones: vuelve al mapa
                             self.estado = "JUEGO"
                         self._guardar_progreso()
 
@@ -155,7 +162,7 @@ class ControladorMaestro:
                         self.estado = "MENU"
 
     def _guardar_progreso(self):
-        """Persistencia de datos"""
+        """Llama al sistema de archivos para salvar la partida en JSON"""
         if self.model.jugadores:
             self.model.datos.guardar_sesion(
                 self.model.jugadores, 
@@ -164,7 +171,7 @@ class ControladorMaestro:
             )
 
     def _dibujar(self):
-        """Renderizado de vistas segun el estado actual"""
+        """Selecciona que vista dibujar en la ventana segun el estado"""
         self.ventana.fill(self.config.NEGRO)
 
         if self.estado == "MENU":
@@ -181,7 +188,7 @@ class ControladorMaestro:
             if self.c_combate:
                 self.v_combate.dibujar_combate(self.ventana, self.model, self.c_combate.log_daño)
         elif self.estado == "PANTALLA_MUERTE":
-            # Se pasan los textos capturados del SistemaEncuentros
+            # Pasamos los textos capturados del modelo a la vista de muerte
             self.v_estructuras.dibujar_pantalla_muerte(
                 self.ventana, 
                 self.model, 

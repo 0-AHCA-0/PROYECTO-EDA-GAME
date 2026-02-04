@@ -1,18 +1,28 @@
 {
     "config": {
-        "modo": 1,
-        "turno": 0
+        "modo": 2,
+        "turno": 1
     },
     "jugadores": [
         {
             "id": 1,
-            "clase": "Fuego",
+            "clase": "Agua",
             "vidas": 0,
             "hp": 0,
-            "xp": 80,
+            "xp": 40,
             "nivel": 2,
-            "hab": "Enviste Igneo",
-            "nodo": "Campus"
+            "hab": "Sana Sana",
+            "nodo": "Piso 5"
+        },
+        {
+            "id": 2,
+            "clase": "Tierra",
+            "vidas": 1,
+            "hp": 20,
+            "xp": 40,
+            "nivel": 3,
+            "hab": "Pantano",
+            "nodo": "Piso 5"
         }
     ]
 }

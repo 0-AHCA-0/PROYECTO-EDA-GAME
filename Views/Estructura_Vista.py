@@ -94,7 +94,7 @@ class Estructura_Vista:
         ventana.blit(frente, (465 - frente.get_width()//2, 180))
 
         # 3. MENSAJE DE DETALLE 
-        # Aqui se muestra el texto largo (ej: 
+        # Aqui se muestra el texto largo 
         txt_msg = self.c.f_chica.render(mensaje.upper(), True, (255, 255, 255))
         ventana.blit(txt_msg, (465 - txt_msg.get_width()//2, 280))
 
