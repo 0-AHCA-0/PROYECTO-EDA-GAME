@@ -6,12 +6,12 @@
     "jugadores": [
         {
             "id": 1,
-            "clase": "Agua",
+            "clase": "Fuego",
             "vidas": 0,
             "hp": 0,
-            "xp": 40,
+            "xp": 80,
             "nivel": 2,
-            "hab": "Squirt",
+            "hab": "Enviste Igneo",
             "nodo": "Campus"
         }
     ]

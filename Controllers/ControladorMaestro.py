@@ -8,7 +8,7 @@ from Views.Menu_Vista import Menu_Vista
 from Views.Juego_Vista import GameView
 from Views.Estructura_Vista import Estructura_Vista
 from Views.Combate_Vista import Combate_Vista
-from Views.Vista_Final import Vista_Final # Nueva vista importada
+from Views.Vista_Final import Vista_Final 
 
 from Controllers.MenuControlador import MenuControlador
 from Controllers.MapControlador import Mapcontrolador
@@ -17,6 +17,7 @@ from Controllers.CombateControlador import CombateControlador
 
 class ControladorMaestro:
     def __init__(self):
+        # Inicializacion de pygame y configuracion base
         pygame.init()
         self.config = Interfaz_conf()
         
@@ -24,6 +25,7 @@ class ControladorMaestro:
         if not hasattr(self.config, 'f_media'):
             self.config.f_media = self.config.f_chica
 
+        # Configuracion de ventana y reloj
         self.ventana = pygame.display.set_mode((930, 600))
         pygame.display.set_caption("ECOS DE LA CARTA")
         self.reloj = pygame.time.Clock()
@@ -31,21 +33,23 @@ class ControladorMaestro:
         # Inicializacion del Modelo
         self.model = GameModel()
         
-        # Vistas
+        # Vistas del juego
         self.v_menu = Menu_Vista(self.config)
         self.v_juego = GameView(self.config)
         self.v_estructuras = Estructura_Vista(self.config)
         self.v_combate = Combate_Vista(self.config)
-        self.v_final = Vista_Final(self.config) # Instancia de la vista de victoria
+        self.v_final = Vista_Final(self.config) 
 
-        # Controladores
+        # Controladores hijos
         self.c_menu = MenuControlador(self.model)
         self.c_mapa = Mapcontrolador(self.model, self.v_estructuras)
         self.c_evolucion = EvolucionControlador(self.model)
         self.c_combate = None 
         
+        # Estados y variables de texto sincronizadas con SistemaEncuentros
         self.estado = "MENU"
         self.msg_muerte = ""
+        self.titulo_muerte = "" 
 
     def ejecutar(self):
         """Bucle principal del juego"""
@@ -64,7 +68,7 @@ class ControladorMaestro:
             self.reloj.tick(60)
 
     def _gestionar_estados(self, eventos):
-        """Maneja las transiciones y la logica de victoria/derrota"""
+        """Maneja los cambios de estado usando la info del Sistema de Encuentros"""
         
         if self.estado == "MENU":
             res = self.c_menu.inicio(eventos)
@@ -77,13 +81,20 @@ class ControladorMaestro:
                 self.estado = "JUEGO"
 
         elif self.estado == "JUEGO":
+            # Capturamos la decision que genera el SistemaEncuentros
             res = self.c_mapa.gestionar_movimiento(eventos)
             if res:
+                # El controlador guarda el mensaje que definiste en el modelo
+                self.msg_muerte = res.get("Mensaje", "HAS CAIDO")
+                
                 if res["Tipo"] == "Combate":
+                    # Si es combate, guardamos el titulo especifico (ej: PROYECTO RECHAZADO)
+                    self.titulo_muerte = res.get("TituloMuerte", "FALLO ACADEMICO")
                     self.c_combate = CombateControlador(self.model, self.v_combate)
                     self.estado = "COMBATE"
                 elif res["Tipo"] == "Muerte":
-                    self.msg_muerte = res.get("Mensaje", "Has caido")
+                    # Muerte directa por trampa o guardia en mapa
+                    self.titulo_muerte = res.get("Titulo", "FALLO ACADEMICO")
                     self.estado = "PANTALLA_MUERTE"
                     self._guardar_progreso()
                 elif res["Tipo"] == "Premio":
@@ -97,17 +108,14 @@ class ControladorMaestro:
                 if res != "COMBATE":
                     if self.c_combate.victoria:
                         jugador = self.model.obtener_jugador_actual()
-                        # Verificamos si la victoria fue en el nodo final contra Boris
+                        # Verificamos si gano en el ultimo nodo
                         if getattr(jugador, "nodo_actual", "") == "Piso 5":
                             self.estado = "VICTORIA_FINAL"
                         else:
                             self.estado = res 
                     elif self.c_combate.derrota:
-                        jugador = self.model.obtener_jugador_actual()
-                        if getattr(jugador, "nodo_actual", "") == "Piso 5":
-                            self.msg_muerte = "REPROBASTE EDA"
-                        else:
-                            self.msg_muerte = "No lograste superar el examen"
+                        # Al morir, el estado cambia a muerte
+                        # El titulo y mensaje ya se guardaron al entrar al nodo en JUEGO
                         self.estado = "PANTALLA_MUERTE"
                     
                     self.c_combate = None
@@ -131,10 +139,11 @@ class ControladorMaestro:
                                 self.model.cambiar_turno()
                                 self.estado = "JUEGO"
                             else:
-                                # Borrar datos al perder todo y volver al menu
+                                # Reset total si no hay mas vidas/jugadores
                                 self.__init__() 
                                 self.estado = "MENU"
                         else:
+                            # Reintento si aun tiene vidas
                             self.estado = "JUEGO"
                         self._guardar_progreso()
 
@@ -142,12 +151,11 @@ class ControladorMaestro:
             for evento in eventos:
                 if evento.type == pygame.MOUSEBUTTONDOWN:
                     if self.v_final.rect_boton_fin.collidepoint(evento.pos):
-                        # Reinicio total tras ganar el juego
                         self.__init__()
                         self.estado = "MENU"
 
     def _guardar_progreso(self):
-        """Persistencia de datos en JSON"""
+        """Persistencia de datos"""
         if self.model.jugadores:
             self.model.datos.guardar_sesion(
                 self.model.jugadores, 
@@ -156,7 +164,7 @@ class ControladorMaestro:
             )
 
     def _dibujar(self):
-        """Renderizado de vistas por estado"""
+        """Renderizado de vistas segun el estado actual"""
         self.ventana.fill(self.config.NEGRO)
 
         if self.estado == "MENU":
@@ -173,6 +181,12 @@ class ControladorMaestro:
             if self.c_combate:
                 self.v_combate.dibujar_combate(self.ventana, self.model, self.c_combate.log_daño)
         elif self.estado == "PANTALLA_MUERTE":
-            self.v_estructuras.dibujar_pantalla_muerte(self.ventana, self.model, self.msg_muerte)
+            # Se pasan los textos capturados del SistemaEncuentros
+            self.v_estructuras.dibujar_pantalla_muerte(
+                self.ventana, 
+                self.model, 
+                self.msg_muerte, 
+                self.titulo_muerte
+            )
         elif self.estado == "VICTORIA_FINAL":
             self.v_final.dibujar_victoria(self.ventana, self.model)

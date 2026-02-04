@@ -74,28 +74,41 @@ class Estructura_Vista:
             txt_hab = self.c.f_chica.render(habilidad, True, self.c.NEGRO)
             ventana.blit(txt_hab, txt_hab.get_rect(center=rect_b.center))
 
-    def dibujar_pantalla_muerte(self, ventana, modelo, mensaje=""):
-        """Dibuja el mensaje cuando pierdes (Trampa o Combate)"""
-        # Capa roja transparente para dar efecto de peligro
+    def dibujar_pantalla_muerte(self, ventana, modelo, mensaje="", titulo="FALLO ACADEMICO"):
+        """Pantalla de derrota: Muestra el fin de la partida por diferentes motivos."""
+        
+        # 1. CREAR EL AMBIENTE DE DERROTA
+        # Generamos una capa roja semi-transparente para oscurecer el fondo del juego
         overlay = pygame.Surface((930, 600), pygame.SRCALPHA)
-        overlay.fill((20, 0, 0, 215)) 
+        overlay.fill((30, 0, 0, 220)) # Un rojo oscuro para dar sensacion de peligro
         ventana.blit(overlay, (0, 0))
 
+        # Obtenemos los datos del jugador para saber cuantas vidas globales le quedan
         jugador = modelo.obtener_jugador_actual()
         
-        # Texto principal
-        frente = self.c.f_grande.render("PROYECTO RECHAZADO", True, (255, 80, 0))
+        # 2. TITULO DINAMICO 
+        # Renderiza el titulo que viene del controlador 
+        # Se usa .upper() para que siempre salga en mayusculas imponentes
+        frente = self.c.f_grande.render(titulo.upper(), True, (255, 80, 0))
+        # Se centra horizontalmente restando la mitad del ancho del texto al centro de la pantalla 
         ventana.blit(frente, (465 - frente.get_width()//2, 180))
 
-        # El mensaje que viene desde el Sistema de Encuentros (como el de EDO)
+        # 3. MENSAJE DE DETALLE 
+        # Aqui se muestra el texto largo (ej: 
         txt_msg = self.c.f_chica.render(mensaje.upper(), True, (255, 255, 255))
         ventana.blit(txt_msg, (465 - txt_msg.get_width()//2, 280))
 
-        # Boton para reintentar o salir
+        # 4. BOTON DE ACCION (ESTUDIAR O RENUNCIAR)
+        # Definimos el area interactiva del boton
         self.rect_boton_muerte = pygame.Rect(315, 410, 300, 60)
-        # El texto cambia si aun te quedan vidas o si ya perdiste todas
+        
+        # Si al jugador aun le quedan vidas (corazones), puede reintentar (Estudiar mas)
+        # Si ya perdio todo, el juego le obliga a salir (Anular matricula)
         msg_btn = "ESTUDIAR MAS" if jugador.vidas > 0 else "ANULAR MATRICULA"
         
-        pygame.draw.rect(ventana, (30, 30, 30), self.rect_boton_muerte, border_radius=12)
+        # Dibujamos el cuerpo del boton en gris oscuro
+        pygame.draw.rect(ventana, (40, 40, 40), self.rect_boton_muerte, border_radius=12)
+        
+        # Escribimos el texto del boton centrado exactamente en su rectangulo
         txt_b = self.c.f_chica.render(msg_btn, True, (255, 255, 255))
         ventana.blit(txt_b, txt_b.get_rect(center=self.rect_boton_muerte.center))
