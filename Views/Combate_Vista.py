@@ -1,32 +1,38 @@
 import pygame
 import math
 
+# Esta clase dibuja todo lo que ves durante un enfrentamiento
 class Combate_Vista:
     def __init__(self, config):
         self.c = config
-        # Boton centrado
+        # Define el area donde el usuario puede hacer clic para atacar
         self.rect_boton_hab = pygame.Rect(350, 480, 230, 60)
 
     def dibujar_combate(self, ventana, modelo, log_daño):
         jugador = modelo.obtener_jugador_actual()
         if not jugador: return
 
-        # 1. FONDO
+        # 1. FONDO AMBIENTAL
         try:
+            # Carga el fondo segun el lugar donde estas peleando
             ruta_fondo = modelo.obtener_ruta_fondo_combate()
             fondo = pygame.image.load(ruta_fondo)
             ventana.blit(pygame.transform.scale(fondo, (930, 600)), (0, 0))
+            
+            # Oscurece un poco el fondo para que los textos se lean mejor
             overlay = pygame.Surface((930, 600), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 110))
             ventana.blit(overlay, (0, 0))
         except:
+            # Si falla la imagen, pone un gris oscuro de emergencia
             ventana.fill((20, 20, 20))
 
-        # 2. PERSONAJES
+        # 2. PERSONAJES Y ANIMACION
+        # Crea un efecto de flotacion suave usando el tiempo real
         t = pygame.time.get_ticks() / 1000
         mov = math.sin(t) * 10
         
-        # Jugador
+        # Dibuja al Jugador a la izquierda con su titulo de evolucion
         try:
             img_p = pygame.image.load(modelo.obtener_ruta_imagen_personaje())
             ventana.blit(pygame.transform.scale(img_p, (200, 260)), (100, 150 + mov))
@@ -35,61 +41,71 @@ class Combate_Vista:
         except:
             pygame.draw.rect(ventana, (0, 200, 0), (100, 150, 200, 260), 2)
 
-        # Enemigo
+        # Dibuja al Enemigo a la derecha
         enemigo = modelo.encuentros.enemigo_actual
         if enemigo:
             try:
-                # Ajuste de nombre de imagen segun nodo
+                # Detecta si es Boris (Jefe) para poner su imagen especial
                 nodo = getattr(jugador, "nodo_actual", "Campus")
                 nombre_img = "Boris.png" if nodo == "Piso 5" else "Enemigo.png"
                 ruta_e = modelo.rutas.obtener_ruta_personaje("Enemigo", nombre_img)
                 img_e = pygame.image.load(ruta_e)
                 
-                # Nombre sobre el enemigo
+                # Muestra el nombre del rival sobre su cabeza
                 txt_nom_e = self.c.f_chica.render(enemigo.nombre.upper(), True, (255, 100, 100))
                 ventana.blit(txt_nom_e, (730 - txt_nom_e.get_width()//2, 120 - mov))
                 ventana.blit(pygame.transform.scale(img_e, (200, 260)), (630, 150 - mov))
             except:
                 pygame.draw.rect(ventana, (255, 0, 0), (630, 150, 200, 260), 2)
 
-        # 3. INTERFAZ (Letra compacta tipo Arial)
+        # 3. INTERFAZ DE SALUD (HUD)
         x_bar, y_bar = 100, 450
         
-        # Vida Jugador
+        # Dibuja la barra de LP del jugador
         self._barra_vida(ventana, x_bar, y_bar, jugador.vida, jugador.vida_max, self.c.NEON, "LP")
         
-        # --- VIDAS GLOBALES: DEBAJO DE LOS LP ---
+        # Dibuja los circulos de vidas globales justo debajo de la barra de salud
         for i in range(jugador.vidas):
             pygame.draw.circle(ventana, (255, 40, 40), (x_bar + (i * 18), y_bar + 25), 6)
 
-        # Vida Enemigo
+        # Dibuja la barra del enemigo si todavia no ha sido derrotado
         if enemigo:
             v_max_e = getattr(enemigo, "vida_max", 100)
             self._barra_vida(ventana, 630, y_bar, enemigo.vida, v_max_e, (255, 50, 50), enemigo.nombre.upper())
 
-        # BOTON ATAQUE (Uso de get_rect para centrar sin estirar)
+        # 4. BOTON DE ACCION
+        # Rectangulo interactivo para el ataque
         pygame.draw.rect(ventana, (10, 10, 10), self.rect_boton_hab, border_radius=10)
         pygame.draw.rect(ventana, self.c.NEON, self.rect_boton_hab, 2, border_radius=10)
         
+        # Escribe la habilidad actual centrada en el boton
         hab = getattr(jugador, "habilidad_actual", "Ataque")
         txt_btn = self.c.f_chica.render(f"USAR: {hab.upper()}", True, self.c.BLANCO)
         ventana.blit(txt_btn, txt_btn.get_rect(center=self.rect_boton_hab.center))
 
-        # LOG SUPERIOR
+        # 5. MENSAJES DE COMBATE (LOG)
+        # Muestra en la parte superior cuanto daño se hizo en el ultimo turno
         txt_l = self.c.f_chica.render(log_daño, True, self.c.BLANCO)
         ventana.blit(txt_l, (465 - txt_l.get_width()//2, 40))
 
     def _barra_vida(self, ventana, x, y, actual, maximo, color, nombre):
+        """Metodo privado para dibujar las barras de salud proporcionales."""
         ancho = 200
+        # Evita errores de division por cero y asegura que la barra no sea negativa
         ratio = max(0, min(actual / (maximo if maximo > 0 else 1), 1))
+        
+        # Fondo oscuro de la barra
         pygame.draw.rect(ventana, (40, 40, 40), (x, y, ancho, 12), border_radius=4)
+        # Parte llena con el color de salud (Neon para ti, Rojo para el enemigo)
         if ratio > 0:
             pygame.draw.rect(ventana, color, (x, y, int(ancho * ratio), 12), border_radius=4)
         
+        # Texto con los puntos de vida numericos
         txt_val = self.c.f_chica.render(f"{nombre}: {int(actual)}", True, self.c.BLANCO)
         ventana.blit(txt_val, (x, y - 22))
 
     def dibujar_derrota(self, ventana, msj):
+        """Pantalla roja semi-transparente que sale cuando pierdes."""
         s = pygame.Surface((930, 600), pygame.SRCALPHA); s.fill((0, 0, 0, 220))
         ventana.blit(s, (0, 0))
         txt = self.c.f_grande.render("DERROTA", True, (255, 0, 0))

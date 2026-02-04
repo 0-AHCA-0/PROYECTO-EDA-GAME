@@ -1,12 +1,13 @@
 import pygame
 import os
 
+# Esta clase dibuja el esqueleto del juego: Mapa, Evoluciones y Derrota
 class Estructura_Vista:
     def __init__(self, config):
         self.c = config
-        self.botones_evolucion = []
+        self.botones_evolucion = [] # Lista para saber donde estan los botones de nivel
         
-        # Coordenadas del mapa (Grafo)
+        # COORDENADAS: Aqui defines donde aparece cada circulo en la pantalla
         self.posiciones_mapa = {
             "Inicio": (820, 520),
             "Campus": (750, 410),
@@ -15,12 +16,12 @@ class Estructura_Vista:
             "Piso 5": (820, 150)
         }
         
-        # Ruta base del proyecto
+        # Busca la carpeta raiz para encontrar las imagenes de fondo
         self.ruta_proyecto = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     def dibujar_mapa_grafo(self, ventana, modelo):
-        """Dibuja SOLO el mapa. Las vidas solo aparecen en combate."""
-        # 1. Lineas de conexion (Aristas)
+        """Dibuja las lineas y circulos del mapa"""
+        # 1. DIBUJAR LINEAS: Conecta los lugares segun el Sistema de Encuentros
         for origen, destinos in modelo.encuentros.grafo_mapa.items():
             for destino in destinos:
                 if origen in self.posiciones_mapa and destino in self.posiciones_mapa:
@@ -28,40 +29,43 @@ class Estructura_Vista:
 
         jugador = modelo.obtener_jugador_actual()
         
-        # 2. Nodos del mapa con letra pequena (tipo Arial)
+        # 2. DIBUJAR NODOS: Los circulos donde haces clic para moverte
         for nodo, pos in self.posiciones_mapa.items():
+            # Si el jugador esta parado aqui, el circulo brilla en color NEON
             es_actual = (nodo == jugador.nodo_actual)
             color_nodo = self.c.NEON if es_actual else (60, 60, 60)
             
             pygame.draw.circle(ventana, color_nodo, pos, 25)
             pygame.draw.circle(ventana, self.c.BLANCO, pos, 25, 2)
             
-            # Texto centrado debajo del nodo
+            # Nombre del lugar debajo del circulo
             txt_nodo = self.c.f_chica.render(nodo, True, self.c.BLANCO)
             rect_txt = txt_nodo.get_rect(center=(pos[0], pos[1] + 45))
             ventana.blit(txt_nodo, rect_txt)
 
 
     def dibujar_arbol_habilidades(self, ventana, modelo):
-        """Pantalla de seleccion de evolucion"""
+        """Dibuja la pantalla de seleccion cuando subes de nivel"""
         try:
+            # Intenta cargar el fondo de evolucion
             ruta_img = os.path.join(self.ruta_proyecto, "Imagenes", "Fondo_Habilidad.png")
             fondo = pygame.image.load(ruta_img)
             ventana.blit(pygame.transform.scale(fondo, (930, 600)), (0, 0))
         except:
             ventana.fill((40, 40, 50))
 
-        self.botones_evolucion = []
-        opciones = modelo.evolucionar_jugador()
+        self.botones_evolucion = [] # Limpia la lista de botones anteriores
+        opciones = modelo.evolucionar_jugador() # Pregunta al modelo que ataques puede elegir
 
-        # Titulo Level Up
-        txt_t = "¡LEVEL UP!"
+        # Titulo brillante
+        txt_t = "LEVEL UP!"
         tit_frente = self.c.f_grande.render(txt_t, True, self.c.NEON)
         ventana.blit(tit_frente, (465 - tit_frente.get_width()//2, 50))
 
-        # Botones de evolucion (f_chica para que no se deformen)
+        # Crea los botones para cada opcion de ataque nueva
         for i, habilidad in enumerate(opciones):
             rect_b = pygame.Rect(200 + (i * 350), 475, 220, 80)
+            # Guarda el rectangulo para que el controlador detecte el clic
             self.botones_evolucion.append({"rect": rect_b, "habilidad": habilidad, "indice": i})
             
             pygame.draw.rect(ventana, self.c.BLANCO, rect_b, border_radius=15)
@@ -71,20 +75,25 @@ class Estructura_Vista:
             ventana.blit(txt_hab, txt_hab.get_rect(center=rect_b.center))
 
     def dibujar_pantalla_muerte(self, ventana, modelo, mensaje=""):
-        """Pantalla de derrota"""
+        """Dibuja el mensaje cuando pierdes (Trampa o Combate)"""
+        # Capa roja transparente para dar efecto de peligro
         overlay = pygame.Surface((930, 600), pygame.SRCALPHA)
         overlay.fill((20, 0, 0, 215)) 
         ventana.blit(overlay, (0, 0))
 
         jugador = modelo.obtener_jugador_actual()
         
-        frente = self.c.f_grande.render("FALLO ACADEMICO", True, (255, 80, 0))
+        # Texto principal
+        frente = self.c.f_grande.render("PROYECTO RECHAZADO", True, (255, 80, 0))
         ventana.blit(frente, (465 - frente.get_width()//2, 180))
 
+        # El mensaje que viene desde el Sistema de Encuentros (como el de EDO)
         txt_msg = self.c.f_chica.render(mensaje.upper(), True, (255, 255, 255))
         ventana.blit(txt_msg, (465 - txt_msg.get_width()//2, 280))
 
+        # Boton para reintentar o salir
         self.rect_boton_muerte = pygame.Rect(315, 410, 300, 60)
+        # El texto cambia si aun te quedan vidas o si ya perdiste todas
         msg_btn = "ESTUDIAR MAS" if jugador.vidas > 0 else "ANULAR MATRICULA"
         
         pygame.draw.rect(ventana, (30, 30, 30), self.rect_boton_muerte, border_radius=12)

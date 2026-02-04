@@ -1,28 +1,18 @@
 {
     "config": {
-        "modo": 2,
-        "turno": 1
+        "modo": 1,
+        "turno": 0
     },
     "jugadores": [
         {
             "id": 1,
-            "clase": "Tierra",
+            "clase": "Agua",
             "vidas": 0,
-            "hp": 120,
-            "xp": 50,
+            "hp": 0,
+            "xp": 40,
             "nivel": 2,
-            "hab": "Lodo",
-            "nodo": "Ed39"
-        },
-        {
-            "id": 2,
-            "clase": "Tierra",
-            "vidas": 1,
-            "hp": 100,
-            "xp": 80,
-            "nivel": 2,
-            "hab": "KKCK",
-            "nodo": "Piso 5"
+            "hab": "Squirt",
+            "nodo": "Campus"
         }
     ]
 }
