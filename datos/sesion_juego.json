@@ -1,27 +1,17 @@
 {
     "config": {
-        "modo": 2,
-        "turno": 1
+        "modo": 1,
+        "turno": 0
     },
     "jugadores": [
         {
             "id": 1,
             "clase": "Agua",
-            "vidas": 0,
-            "hp": 0,
-            "xp": 40,
-            "nivel": 2,
-            "hab": "Sana Sana",
-            "nodo": "Piso 5"
-        },
-        {
-            "id": 2,
-            "clase": "Tierra",
-            "vidas": 1,
-            "hp": 20,
-            "xp": 40,
-            "nivel": 3,
-            "hab": "Pantano",
+            "vidas": 2,
+            "hp": 100,
+            "xp": 50,
+            "nivel": 1,
+            "hab": "Burbuja",
             "nodo": "Piso 5"
         }
     ]

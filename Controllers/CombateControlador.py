@@ -31,6 +31,24 @@ class CombateControlador:
         self.combate_activo = True
         self.victoria = False
         self.derrota = False
+        
+        #Musica 
+        if not pygame.mixer.get_init():
+            pygame.mixer.init()
+            
+        try:
+            if es_jefe:
+                pygame.mixer.music.load("Audio/intro_boris.mp3")
+                segundo_inicio = 21.0
+                
+            else:
+                pygame.mixer.music.load("Audio/Enemy_8bits.mp3")
+                segundo_inicio = 0.00
+            
+            pygame.mixer.music.play(loops=-1, start=segundo_inicio)
+            pygame.mixer.music.set_volume(0.9)
+        except:
+            print("No se encontro nada")
 
     def ejecutar(self, eventos):
         """
@@ -95,6 +113,10 @@ class CombateControlador:
         """
         Determina a que pantalla enviar al jugador tras finalizar el combate.
         """
+        #Primero, antes de salir del combate detenemos la musica
+        pygame.mixer.music.stop()
+        
+        #Determinar estado
         if self.victoria:
             # Ganas XP y el sistema revisa si subes de nivel (Estado EVOLUCION)
             subio = self.jugador.ganar_xp(40)

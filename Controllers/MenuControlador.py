@@ -4,6 +4,18 @@ class MenuControlador:
     def __init__(self, modelo):
         # El controlador guarda una referencia al modelo para actualizar el estado global
         self.model = modelo
+        #Musica
+        if not pygame.mixer.get_init():
+            pygame.mixer.init()
+            
+        try:
+            pygame.mixer.music.load("Audio/Menu_8bits.mp3")
+            
+            pygame.mixer.music.play(loops=-1, start=0.0) 
+            
+            pygame.mixer.music.set_volume(0.4)
+        except:
+            print("Error: No se encontro el archivo en Audio/Menu_8bits.mp3")
     
     def inicio(self, eventos):
         """
@@ -14,13 +26,17 @@ class MenuControlador:
                 # BOTON 1 JUGADOR (1P): Setea el modo y limpia la lista de personajes
                 if pygame.Rect(50, 450, 100, 50).collidepoint(evento.pos):
                     self.model.modo_juego = 1 
-                    self.model.jugadores = [] 
+                    self.model.jugadores = []
+                    pygame.mixer.music.stop() 
                     return "SELECCION"
                 
                 # BOTON 2 JUGADORES (2P): Modo cooperativo o por turnos
                 if pygame.Rect(190, 450, 100, 50).collidepoint(evento.pos):
                     self.model.modo_juego = 2 
                     self.model.jugadores = []
+                    
+                    #Detengo musica
+                    pygame.mixer.music.stop()
                     return "SELECCION"
                     
         # Si no hay clics en los botones, el estado se mantiene igual
@@ -31,6 +47,16 @@ class MenuControlador:
         Gestiona la pantalla de eleccion de clase (Fuego, Agua, Tierra, Aire).
         Soporta la seleccion secuencial para 2 jugadores si es necesario.
         """
+        #Primero la musica
+        if not pygame.mixer.music.get_busy():
+            try:
+                pygame.mixer.music.load("Audio/Seleccion_8bits.mp3")
+                
+                pygame.mixer.music.play(loops=-1, start=0.0)
+                pygame.mixer.music.set_volume(0.5)
+            except:
+                print("Oe no hay musica Audio/Seleccion_8bits.mp3")
+        #Deteccion de cartas
         for evento in eventos:
             if evento.type == pygame.MOUSEBUTTONDOWN:
                 # Revisamos las 4 cartas disponibles en la interfaz
@@ -55,6 +81,8 @@ class MenuControlador:
                         if self.model.modo_juego == 2 and len(self.model.jugadores) < 2:
                             return "SELECCION" 
                         else:
+                            #Detengo musica
+                            pygame.mixer.music.stop()
                             # Si es 1P o ya estan los dos de 2P, iniciamos la partida
                             return "JUEGO" 
                             

@@ -7,12 +7,26 @@ class Mapcontrolador:
         self.model = modelo
         # Referencia a la vista para conocer las coordenadas de los nodos
         self.v_struct = vista_estructuras
+        
+        
     
     def gestionar_movimiento(self, eventos):
         """
         Detecta la interaccion del usuario con los nodos del mapa.
         Calcula colisiones circulares para determinar a que lugar se hizo clic.
         """
+        
+        #Musica: puchale play
+        if not pygame.mixer.music.get_busy():
+            try:
+                pygame.mixer.music.load("Audio/Start_8bits.mp3")
+                # Empezamos en el segundo 0 o el que sea
+                pygame.mixer.music.play(loops=-1, start=0.0)
+                pygame.mixer.music.set_volume(0.3) # Volumen mas bajo para que no aturda
+            except:
+                print("Error: No se encontro Audio/Start_8bits.mp3")
+        
+        #Logica de los clicks
         for evento in eventos:
             if evento.type == pygame.MOUSEBUTTONDOWN:
                 # Recorremos todas las posiciones definidas en la vista
@@ -25,7 +39,8 @@ class Mapcontrolador:
                         # IMPORTANTE: El modelo es quien decide si el salto es valido
                         # y nos devuelve que evento ocurre (Combate, Muerte, Premio, etc.)
                         resultado = self.model.procesar_movimiento(nombre_nodo)
-                        
+                        #Stop a la music
+                        pygame.mixer.music.stop()
                         # Retornamos la decision del Sistema de Encuentros al Maestro
                         return resultado
                         
