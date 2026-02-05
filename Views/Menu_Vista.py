@@ -6,25 +6,31 @@ class Menu_Vista:
         self.c = config
 
     def dibujar_menu(self, ventana, modelo):
-        """Dibuja la pantalla de titulo con los botones de modo de juego"""
+        """
+        Dibuja la pantalla de titulo con los botones de modo de juego.
+        Se cambio el nombre manteniendo la posicion original.
+        """
         try:
-            # Busca la imagen fondo.png usando el gestor de rutas
+            # Carga el fondo desde la carpeta de recursos
             ruta = modelo.rutas.obtener_ruta_archivo("fondo.png") 
             img = pygame.image.load(ruta)
             img = pygame.transform.scale(img, (930, 600))
             ventana.blit(img, (0, 0))
         except:
-            # Si no hay imagen, pone un azul muy oscuro para que se vea el texto blanco
+            # Color de respaldo si falla la imagen
             ventana.fill((10, 10, 30))
 
-        # Dibuja el titulo con sombra para que resalte mas
-        self._texto(ventana, "LEYENDAS", 90, 350, True)
-        self._texto(ventana, "ELEMENTALES", 53, 400, True)
+        # 1. DIBUJO DEL TITULO 
+        # El primer texto va en la posicion 350 de altura
+        self._texto(ventana, "ECOS DE", 55, 350, True)
+        # El segundo texto va en la posicion 400 de altura
+        self._texto(ventana, "LA CARTA", 90, 400, True)
         
-        # Dibuja los botones para elegir 1 o 2 jugadores
-        self._boton(ventana, 50, 450, "1P")
-        self._boton(ventana, 190, 450, "2P")
-
+        # 2. BOTONES DE MODO DE JUEGO
+        # Mantienen las coordenadas exactas para que el clic del controlador coincida
+        self._boton(ventana, 50, 450, "1P")  # Boton para un jugador
+        self._boton(ventana, 190, 450, "2P") # Boton para dos jugadores
+        
     def dibujar_seleccion_clase(self, ventana, modelo):
         """Dibuja la galeria de personajes para que el usuario elija uno"""
         try:

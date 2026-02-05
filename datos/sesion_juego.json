@@ -6,12 +6,12 @@
     "jugadores": [
         {
             "id": 1,
-            "clase": "Agua",
-            "vidas": 2,
-            "hp": 100,
-            "xp": 50,
+            "clase": "Fuego",
+            "vidas": 3,
+            "hp": 60,
+            "xp": 40,
             "nivel": 1,
-            "hab": "Burbuja",
+            "hab": "Chispa",
             "nodo": "Piso 5"
         }
     ]
